@@ -10,8 +10,8 @@ public class GameManager : MonoBehaviour
 
   private List<Transform> pieces;
   private int emptyLocation;
-  private int rows;
-  private int cols;
+  private int rows = 16;
+  private int cols = 9;
   private bool shuffling = false;
 
   // Create the game setup with rows x cols pieces.
@@ -105,8 +105,6 @@ public class GameManager : MonoBehaviour
   void Start()
   {
     pieces = new List<Transform>();
-    rows = 16;
-    cols = 9;
     CreateGamePieces(0.01f);
   }
 
