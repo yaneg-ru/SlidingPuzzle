@@ -10,8 +10,8 @@ public class GameManager : MonoBehaviour
 
   private List<Transform> pieces;
   private int emptyLocation;
-  private int rows = 16;
-  private int cols = 9;
+  [SerializeField, Min(2), Tooltip("Number of rows in the puzzle (min 2).")] private int rows = 16;
+  [SerializeField, Min(2), Tooltip("Number of columns in the puzzle (min 2).")] private int cols = 9;
   private bool shuffling = false;
 
   // Create the game setup with rows x cols pieces.
@@ -105,6 +105,11 @@ public class GameManager : MonoBehaviour
   void Start()
   {
     pieces = new List<Transform>();
+
+    // Защитная проверка: не позволяем задать значения меньше 2 через инспектор.
+    rows = Mathf.Max(2, rows);
+    cols = Mathf.Max(2, cols);
+
     CreateGamePieces(0.01f);
   }
 
@@ -256,6 +261,18 @@ public class GameManager : MonoBehaviour
         count++;
       }
     }
+  }
+
+  // Автоматическая корректировка значений в редакторе (и при изменении в инспекторе).
+  private void OnValidate()
+  {
+    // Если по какой-то причине в инспекторе оказалось 0 или отрицательное — вернуть удобные дефолты.
+    if (rows <= 0) rows = 16;
+    if (cols <= 0) cols = 9;
+
+    // Обеспечить минимальное значение 2.
+    rows = Mathf.Max(2, rows);
+    cols = Mathf.Max(2, cols);
   }
 }
 
