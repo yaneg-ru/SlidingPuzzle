@@ -14,9 +14,9 @@ public class GameManager : MonoBehaviour
   [SerializeField, Min(2), Tooltip("Number of columns in the puzzle (min 2).")] private int cols = 9;
 
   // Время в секундах для автоматической сборки пазла
-  private float solveTimeInSeconds = 1f;
+  private float solveTimeInSeconds = 44f;
   // Время перемещения плитки в секундах
-  private float moveDuration = 0.05f;
+  private float moveDuration = 0.2f;
 
   private bool isAnimating = false;
   private List<int> recordedMoves = new List<int>();
@@ -110,9 +110,6 @@ public class GameManager : MonoBehaviour
     {
       emptyLocation = Random.Range(0, pieces.Count);
       pieces[emptyLocation].gameObject.SetActive(false);
-
-      // log initial empty index
-      Debug.Log($"Initial emptyLocation: {emptyLocation}");
     }
   }
 
@@ -242,27 +239,32 @@ public class GameManager : MonoBehaviour
       int rnd = Random.Range(0, rows * cols);
       if (rnd == last) continue;
 
-      last = tempEmpty;
+      // убираем некорректное присваивание last = tempEmpty;
+      // теперь last обновляется только при успешном обмене (чтобы не делать сразу же обратный ход)
 
       if (SwapIfValidInstantMemory(rnd, -cols, cols, tempPieces, ref tempEmpty))
       {
-        recordedMoves.Add(rnd);
+        recordedMoves.Add(rnd - cols); // rnd + offset (-cols)
         count++;
+        last = rnd;
       }
       else if (SwapIfValidInstantMemory(rnd, +cols, cols, tempPieces, ref tempEmpty))
       {
-        recordedMoves.Add(rnd);
+        recordedMoves.Add(rnd + cols);
         count++;
+        last = rnd;
       }
       else if (SwapIfValidInstantMemory(rnd, -1, 0, tempPieces, ref tempEmpty))
       {
-        recordedMoves.Add(rnd);
+        recordedMoves.Add(rnd - 1);
         count++;
+        last = rnd;
       }
       else if (SwapIfValidInstantMemory(rnd, +1, cols - 1, tempPieces, ref tempEmpty))
       {
-        recordedMoves.Add(rnd);
+        recordedMoves.Add(rnd + 1);
         count++;
+        last = rnd;
       }
     }
 
@@ -366,10 +368,7 @@ public class GameManager : MonoBehaviour
 
 
     // показываем пустую плитку и настраиваем её UV, чтобы она отображала свою часть текстуры
-    // RevealEmptyTile();
-
-    // логируем финальную позицию пустой ячейки после автосбора
-    Debug.Log($"Final emptyLocation: {emptyLocation}");
+    RevealEmptyTile();
   }
 
   // Показывает пустую плитку и настраивает её UV на ту часть текстуры, которая соответствует её исходному индексу.
