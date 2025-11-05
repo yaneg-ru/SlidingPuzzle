@@ -60,6 +60,11 @@ public class GameManager : MonoBehaviour
     float widthX = scaleX / (float)cols;
     float widthY = scaleY / (float)rows;
 
+    // UV ширины/высоты в нормализованном пространстве текстуры (0..1).
+    // Используем 1/cols и 1/rows чтобы покрыть всю текстуру независимо от визуального масштаба.
+    float uvWidthX = 1f / (float)cols;
+    float uvWidthY = 1f / (float)rows;
+
     // Проходимся по строкам и столбцам, создаём плитки слева направо сверху вниз.
     for (int row = 0; row < rows; row++)
     {
@@ -93,17 +98,21 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-          // Настраиваем UV‑координаты для прямоугольной сетки
-          float gap = gapThickness / 2;
+          // Настраиваем UV‑координаты в нормализованном пространстве (0..1),
+          // чтобы вся текстура использовалась полностью независимо от локального scaleX/scaleY.
+          // Малый зазор по UV можно настроить (uvGap), здесь поставлен 0 для корректного покрытия.
+          float uvGap = 0f;
 
-          // Получаем Mesh плитки и создаём новый массив UV для 4 вершин.
           Mesh mesh = piece.GetComponent<MeshFilter>().mesh;
           Vector2[] uv = new Vector2[4];
 
-          uv[0] = new Vector2((widthX * col) + gap, 1 - ((widthY * (row + 1)) - gap));
-          uv[1] = new Vector2((widthX * (col + 1)) - gap, 1 - ((widthY * (row + 1)) - gap));
-          uv[2] = new Vector2((widthX * col) + gap, 1 - ((widthY * row) + gap));
-          uv[3] = new Vector2((widthX * (col + 1)) - gap, 1 - ((widthY * row) + gap));
+          float uvX = uvWidthX * col;
+          float uvY = uvWidthY * row;
+
+          uv[0] = new Vector2(uvX + uvGap, 1f - (uvY + uvWidthY - uvGap));
+          uv[1] = new Vector2(uvX + uvWidthX - uvGap, 1f - (uvY + uvWidthY - uvGap));
+          uv[2] = new Vector2(uvX + uvGap, 1f - (uvY + uvGap));
+          uv[3] = new Vector2(uvX + uvWidthX - uvGap, 1f - (uvY + uvGap));
 
           mesh.uv = uv;
         }
