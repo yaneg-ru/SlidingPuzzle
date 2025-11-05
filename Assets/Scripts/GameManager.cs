@@ -28,6 +28,9 @@ public class GameManager : MonoBehaviour
   // Количество последних позиций пустой плитки, которые следует избегать при перемешивании
   private int shuffleHistorySize = 10;
 
+  // Number of shuffle candidate attempts; the variant with maximum misplaced tiles will be chosen
+  private int shuffleAttempts = 1000;
+
   // Create the game setup with rows x cols pieces.
   /// <summary>
   /// Создаёт поле головоломки размера <c>rows x cols</c>, инстанцируя префабы плиток
@@ -460,157 +463,160 @@ public class GameManager : MonoBehaviour
 
   /// <summary>
   /// Перемешивает поле плиток для прямоугольной сетки rows x cols.
+  /// Попробует N вариантов (shuffleAttempts) и выберет вариант с максимальным количеством misplaced плиток.
+  /// Каждый вариант логируется, а также логируется выбранный результат.
   /// </summary>
   private void Shuffle()
   {
-    // Перемешивание в памяти: работаем с копией списка плиток, чтобы ничего не было видно на сцене.
-    int count = 0;
-    Queue<int> recentPositions = new Queue<int>(); // История последних N позиций
+    // Multi-attempt shuffle: try shuffleAttempts variants in memory and pick the one with maximum misplaced tiles.
+    int bestMisplaced = -1;
+    List<Transform> bestTempPieces = null;
+    int bestTempEmpty = 0;
+    List<int> bestRecordedMoves = null;
+    int bestAttemptIndex = -1;
 
-    // Копия текущих плиток (ссылка на те же Transform, но порядок меняется только в tempPieces)
-    List<Transform> tempPieces = new List<Transform>(pieces);
-    int tempEmpty = emptyLocation;
+    // Clamp attempts
+    int attempts = Mathf.Max(1, shuffleAttempts);
 
-    // Очищаем список записанных ходов перед новым перемешиванием
-    recordedMoves.Clear();
-
-    // Обновленная длина перемешивания для прямоугольной сетки
-    int targetCountSwaps = (int)(solveTimeInSeconds / moveDuration);
-    while (count < targetCountSwaps)
+    for (int attempt = 0; attempt < attempts; attempt++)
     {
-      int total = tempPieces.Count;
+      // In-memory shuffle (same logic as previous single Shuffle but writes to local variables)
+      int count = 0;
+      Queue<int> recentPositions = new Queue<int>();
+      List<Transform> tempPieces = new List<Transform>(pieces);
+      int tempEmpty = emptyLocation;
+      List<int> recordedMovesLocal = new List<int>();
 
-      // Вычисляем индексы ЧЕТЫРЕХ соседей, которые могут переместиться в tempEmpty (с учётом оборачивания)
-      int row = tempEmpty / cols;
-      int col = tempEmpty % cols;
-
-      int upNeighbor = (tempEmpty + cols) % total; // piece that would move up (offset -cols)
-      int downNeighbor = ((tempEmpty - cols) % total + total) % total; // (offset +cols)
-      int leftNeighbor = row * cols + ((col + 1) % cols); // piece right of empty moves left (offset -1)
-      int rightNeighbor = row * cols + ((col - 1 + cols) % cols); // piece left of empty moves right (offset +1)
-
-      // Список кандидатов (index, offset, colCheck)
-      (int idx, int offset, int colCheck)[] candidates = new (int, int, int)[]
+      int targetCountSwaps = (int)(solveTimeInSeconds / moveDuration);
+      while (count < targetCountSwaps)
       {
-        (upNeighbor, -cols, cols),
-        (downNeighbor, +cols, cols),
-        (leftNeighbor, -1, 0),
-        (rightNeighbor, +1, cols - 1)
-      };
+        int total = tempPieces.Count;
+        int row = tempEmpty / cols;
+        int col = tempEmpty % cols;
 
-      // Перемешиваем порядок кандидатов, чтобы не всегда брать в одном порядке
-      for (int i = 0; i < candidates.Length; i++)
-      {
-        int j = Random.Range(0, candidates.Length);
-        var tmp = candidates[i];
-        candidates[i] = candidates[j];
-        candidates[j] = tmp;
-      }
+        int upNeighbor = (tempEmpty + cols) % total; // piece that would move up (offset -cols)
+        int downNeighbor = ((tempEmpty - cols) % total + total) % total; // (offset +cols)
+        int leftNeighbor = row * cols + ((col + 1) % cols); // piece right of empty moves left (offset -1)
+        int rightNeighbor = row * cols + ((col - 1 + cols) % cols); // piece left of empty moves right (offset +1)
 
-      bool swapped = false;
-      int chosenRnd = -1;
-      int chosenTarget = -1;
-
-      // Пробуем в перемешанном порядке соседей
-      foreach (var cand in candidates)
-      {
-        int candidateIndex = cand.idx;
-        // Пропускаем кандидата, если он в истории
-        if (recentPositions.Contains(candidateIndex)) continue;
-
-        int target;
-        if (SwapIfValidInstantMemory(candidateIndex, cand.offset, cand.colCheck, tempPieces, ref tempEmpty, out target))
+        (int idx, int offset, int colCheck)[] candidates = new (int, int, int)[]
         {
-          recordedMoves.Add(target);
-          swapped = true;
-          chosenRnd = candidateIndex;
-          chosenTarget = target;
-          break;
-        }
-      }
+          (upNeighbor, -cols, cols),
+          (downNeighbor, +cols, cols),
+          (leftNeighbor, -1, 0),
+          (rightNeighbor, +1, cols - 1)
+        };
 
-      if (swapped)
-      {
-        count++;
-
-        // Проверяем, не заблокируем ли мы все возможные ходы после добавления chosenRnd в историю
-        Queue<int> testQueue = new Queue<int>(recentPositions);
-        testQueue.Enqueue(chosenRnd);
-        if (testQueue.Count > shuffleHistorySize)
+        for (int i = 0; i < candidates.Length; i++)
         {
-          testQueue.Dequeue();
+          int j = Random.Range(0, candidates.Length);
+          var tmp = candidates[i];
+          candidates[i] = candidates[j];
+          candidates[j] = tmp;
         }
 
-        // Пересчитываем соседей для новой текущей пустой позиции (tempEmpty уже обновлён SwapIfValidInstantMemory)
-        int upPos = (tempEmpty + cols) % total;
-        int downPos = ((tempEmpty - cols) % total + total) % total;
-        int currentRow = tempEmpty / cols;
-        int currentCol = tempEmpty % cols;
-        int leftCol = ((currentCol + 1) % cols);
-        int rightCol = ((currentCol - 1 + cols) % cols);
-        int leftPos = currentRow * cols + leftCol;
-        int rightPos = currentRow * cols + rightCol;
-
-        bool allBlocked = testQueue.Contains(upPos) &&
-                          testQueue.Contains(downPos) &&
-                          testQueue.Contains(leftPos) &&
-                          testQueue.Contains(rightPos);
-
-        // Добавляем в историю только если не все ходы будут заблокированы
-        if (!allBlocked)
+        bool swapped = false;
+        int chosenRnd = -1;
+        foreach (var cand in candidates)
         {
-          recentPositions.Enqueue(chosenRnd);
+          int candidateIndex = cand.idx;
+          if (recentPositions.Contains(candidateIndex)) continue;
 
-          // Если история превысила лимит, удаляем самую старую позицию
-          if (recentPositions.Count > shuffleHistorySize)
+          int target;
+          if (SwapIfValidInstantMemory(candidateIndex, cand.offset, cand.colCheck, tempPieces, ref tempEmpty, out target))
           {
-            recentPositions.Dequeue();
+            recordedMovesLocal.Add(target);
+            swapped = true;
+            chosenRnd = candidateIndex;
+            break;
+          }
+        }
+
+        if (swapped)
+        {
+          count++;
+
+          Queue<int> testQueue = new Queue<int>(recentPositions);
+          testQueue.Enqueue(chosenRnd);
+          if (testQueue.Count > shuffleHistorySize) testQueue.Dequeue();
+
+          int upPos = (tempEmpty + cols) % total;
+          int downPos = ((tempEmpty - cols) % total + total) % total;
+          int currentRow = tempEmpty / cols;
+          int currentCol = tempEmpty % cols;
+          int leftCol = ((currentCol + 1) % cols);
+          int rightCol = ((currentCol - 1 + cols) % cols);
+          int leftPos = currentRow * cols + leftCol;
+          int rightPos = currentRow * cols + rightCol;
+
+          bool allBlocked = testQueue.Contains(upPos) &&
+                            testQueue.Contains(downPos) &&
+                            testQueue.Contains(leftPos) &&
+                            testQueue.Contains(rightPos);
+
+          if (!allBlocked)
+          {
+            recentPositions.Enqueue(chosenRnd);
+            if (recentPositions.Count > shuffleHistorySize) recentPositions.Dequeue();
+          }
+          else
+          {
+            if (recentPositions.Count > 0) recentPositions.Dequeue();
           }
         }
         else
         {
-          // Если добавление заблокирует все ходы — не добавляем, но если история слишком большая и дальнейший прогресс невозможен,
-          // снимаем старый элемент, чтобы не застрять.
-          if (recentPositions.Count > 0)
+          if (recentPositions.Count > 0) recentPositions.Dequeue();
+          else
           {
-            recentPositions.Dequeue();
-          }
-        }
-      }
-      else
-      {
-        // Ни один сосед не подошёл (скорее всего все в recentPositions) — освобождаем самый старый элемент истории
-        // чтобы гарантировать возможность хода и избежать бесконечного цикла.
-        if (recentPositions.Count > 0)
-        {
-          recentPositions.Dequeue();
-        }
-        else
-        {
-          // Защита на случай неожиданной ситуации: делаем произвольный проход по всем элементам и пытаемся найти возможный swap.
-          bool forced = false;
-          for (int i = 0; i < total && !forced; i++)
-          {
-            int target;
-            if (SwapIfValidInstantMemory(i, -cols, cols, tempPieces, ref tempEmpty, out target) ||
-                SwapIfValidInstantMemory(i, +cols, cols, tempPieces, ref tempEmpty, out target) ||
-                SwapIfValidInstantMemory(i, -1, 0, tempPieces, ref tempEmpty, out target) ||
-                SwapIfValidInstantMemory(i, +1, cols - 1, tempPieces, ref tempEmpty, out target))
+            bool forced = false;
+            for (int i = 0; i < total && !forced; i++)
             {
-              recordedMoves.Add(target);
-              count++;
-              forced = true;
+              int target;
+              if (SwapIfValidInstantMemory(i, -cols, cols, tempPieces, ref tempEmpty, out target) ||
+                  SwapIfValidInstantMemory(i, +cols, cols, tempPieces, ref tempEmpty, out target) ||
+                  SwapIfValidInstantMemory(i, -1, 0, tempPieces, ref tempEmpty, out target) ||
+                  SwapIfValidInstantMemory(i, +1, cols - 1, tempPieces, ref tempEmpty, out target))
+              {
+                recordedMovesLocal.Add(target);
+                count++;
+                forced = true;
+              }
             }
+            if (!forced) break;
           }
-          // Если и это не помогло — просто выходим из цикла, чтобы не зависнуть
-          if (!forced) break;
         }
-      }
+      } // end while single attempt
 
+      // compute misplaced for this candidate
+      int misplaced = 0;
+      for (int i = 0; i < tempPieces.Count; i++)
+      {
+        var p = tempPieces[i];
+        if (p == null) continue;
+        if (p.name != $"{i}") misplaced++;
+      }
+      int movesPerformed = recordedMovesLocal.Count;
+
+      Debug.Log($"Shuffle candidate {attempt + 1}/{attempts}: moves={movesPerformed}, misplaced={misplaced}, total={tempPieces.Count}");
+
+      if (misplaced > bestMisplaced)
+      {
+        bestMisplaced = misplaced;
+        bestTempPieces = new List<Transform>(tempPieces);
+        bestTempEmpty = tempEmpty;
+        bestRecordedMoves = new List<int>(recordedMovesLocal);
+        bestAttemptIndex = attempt;
+      }
+    } // end attempts loop
+
+    // Apply best candidate to scene
+    if (bestTempPieces == null)
+    {
+      Debug.LogWarning("Shuffle produced no candidates; leaving current order.");
+      return;
     }
 
-    // После завершения перемешивания применяем итоговый порядок к реальным плиткам (без анимаций).
-    // Вычислим параметры сетки аналогично CreateGamePieces (используем тот же gapThickness).
     float gapThickness = 0.01f;
     float aspectRatio = (float)cols / (float)rows;
     float scaleX, scaleY;
@@ -619,8 +625,7 @@ public class GameManager : MonoBehaviour
     float widthX = scaleX / (float)cols;
     float widthY = scaleY / (float)rows;
 
-    // Применяем порядок: для каждого слота i устанавливаем соответствующий Transform из tempPieces[i]
-    pieces = tempPieces;
+    pieces = bestTempPieces;
     for (int i = 0; i < pieces.Count; i++)
     {
       Transform piece = pieces[i];
@@ -638,40 +643,17 @@ public class GameManager : MonoBehaviour
       float tileSizeY = (2 * widthY) - gapThickness;
       piece.localScale = new Vector3(tileSizeX, tileSizeY, 1);
 
-      // Активируем все плитки, затем скроем пустую
       piece.gameObject.SetActive(true);
     }
 
-    // Устанавливаем пустую позицию и скрываем соответствующую плитку
-    emptyLocation = tempEmpty;
+    emptyLocation = bestTempEmpty;
     if (emptyLocation >= 0 && emptyLocation < pieces.Count)
     {
       pieces[emptyLocation].gameObject.SetActive(false);
     }
 
-    // Выводим статистику по завершившемуся перемешиванию
-    LogShuffleSummary();
-  }
-
-  // Выводит в консоль краткую статистику перемешивания:
-  // - сколько ходов было выполнено,
-  // - сколько плиток сейчас не на своих местах,
-  // - общее количество плиток.
-  private void LogShuffleSummary()
-  {
-    int movesPerformed = recordedMoves != null ? recordedMoves.Count : 0;
-    int total = pieces != null ? pieces.Count : 0;
-    int misplaced = 0;
-    if (pieces != null)
-    {
-      for (int i = 0; i < pieces.Count; i++)
-      {
-        var p = pieces[i];
-        if (p == null) continue;
-        if (p.name != $"{i}") misplaced++;
-      }
-    }
-    Debug.Log($"Shuffle finished: moves={movesPerformed}, misplaced={misplaced}, total={total}");
+    recordedMoves = bestRecordedMoves ?? new List<int>();
+    Debug.Log($"Chosen shuffle candidate {bestAttemptIndex + 1}/{attempts}: moves={recordedMoves.Count}, misplaced={bestMisplaced}, total={pieces.Count}");
   }
 
   /// <summary>
