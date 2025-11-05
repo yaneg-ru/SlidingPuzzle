@@ -15,8 +15,12 @@ public class GameManager : MonoBehaviour
 
   // Время в секундах для автоматической сборки пазла
   private float solveTimeInSeconds = 30f;
-  // Время перемещения плитки в секундах
+  // Время перемещения плитки в секундах для перемещения на одну клетку (базовая длительность)
   private float moveDuration = 0.15f;
+
+  // Эталонное расстояние между соседними плитками в локальных координатах.
+  // Заполняется в CreateGamePieces и используется для масштабирования длительности при оборачивании.
+  private float singleTileDistance = 1f;
 
   private bool isAnimating = false;
   private List<int> recordedMoves = new List<int>();
@@ -114,6 +118,35 @@ public class GameManager : MonoBehaviour
       emptyLocation = Random.Range(0, pieces.Count);
       pieces[emptyLocation].gameObject.SetActive(false);
     }
+
+    // Вычисляем эталонное расстояние между соседними плитками (одна клетка).
+    // Ищем простого соседа: индекс 1 (если в той же строке) или индекс cols (следующая строка).
+    if (pieces.Count > 1)
+    {
+      int neighborIndex = 1;
+      if (cols > 1 && (1 / cols) != 0) // безопасный выбор: если cols>1, индекс 1 будет соседним по столбцу
+      {
+        neighborIndex = 1;
+      }
+      else if (pieces.Count > cols)
+      {
+        neighborIndex = cols;
+      }
+      else
+      {
+        neighborIndex = 1;
+      }
+
+      // Защита на случай некорректных индексов
+      if (neighborIndex >= pieces.Count) neighborIndex = Mathf.Clamp(neighborIndex, 0, pieces.Count - 1);
+
+      singleTileDistance = Vector3.Distance(pieces[0].localPosition, pieces[neighborIndex].localPosition);
+      if (singleTileDistance <= 0f) singleTileDistance = 1f; // fallback
+    }
+    else
+    {
+      singleTileDistance = 1f;
+    }
   }
 
   // Start is called before the first frame update
@@ -187,6 +220,10 @@ public class GameManager : MonoBehaviour
 
   /// <summary>
   /// Анимирует плавное перемещение плитки из позиции index1 в позицию index2
+  /// При оборачивании (крайняя колонка/строка) делает анимацию через край:
+  /// 1) двигает плитку к краю (с небольшим выходом),
+  /// 2) телепортирует на противоположный край (за пределом),
+  /// 3) добирает до целевой ячейки.
   /// </summary>
   private IEnumerator AnimateSwap(int index1, int index2)
   {
@@ -195,35 +232,217 @@ public class GameManager : MonoBehaviour
     Transform piece1 = pieces[index1];
     Transform piece2 = pieces[index2];
 
+    if (piece1 == null || piece2 == null)
+    {
+      isAnimating = false;
+      yield break;
+    }
+
     Vector3 startPos = piece1.localPosition;
     Vector3 endPos = piece2.localPosition;
 
-    float elapsed = 0f;
+    // Подготовим параметры сетки (те же, что используются в CreateGamePieces)
+    float aspectRatio = (float)cols / (float)rows;
+    float scaleX, scaleY;
+    if (aspectRatio > 1f) { scaleX = 1f; scaleY = 1f / aspectRatio; }
+    else { scaleX = aspectRatio; scaleY = 1f; }
+    float widthX = scaleX / (float)cols;
+    float widthY = scaleY / (float)rows;
 
-    // Плавное перемещение с использованием Lerp
-    while (elapsed < moveDuration)
+    float minX = -scaleX + widthX;
+    float maxX = scaleX - widthX;
+    float minY = -scaleY + widthY;
+    float maxY = scaleY - widthY;
+
+    // расчёт overshoot (насколько уходим за край)
+    float overshoot = Mathf.Max(0.1f * singleTileDistance, singleTileDistance * 0.5f);
+
+    // координаты плиток в сетке
+    int row1 = index1 / cols;
+    int col1 = index1 % cols;
+    int row2 = index2 / cols;
+    int col2 = index2 % cols;
+
+    bool horizontalWrap = (row1 == row2) && (Mathf.Abs(col1 - col2) == cols - 1);
+    bool verticalWrap = (col1 == col2) && (Mathf.Abs(row1 - row2) == rows - 1);
+
+    // Хелпер: вычислить длительность для данного расстояния, масштабируя относительно singleTileDistance
+    float CalcDurationForDistance(float distance)
     {
-      elapsed += Time.deltaTime;
-      float t = Mathf.Clamp01(elapsed / moveDuration);
-
-      // Можно использовать SmoothStep для более плавного движения
-      t = t * t * (3f - 2f * t);
-
-      piece1.localPosition = Vector3.Lerp(startPos, endPos, t);
-      yield return null;
+      float baseDur = moveDuration;
+      if (singleTileDistance > 1e-5f)
+        baseDur = moveDuration * (distance / singleTileDistance);
+      return Mathf.Max(0.02f, baseDur);
     }
 
-    // Гарантируем точную конечную позицию
-    piece1.localPosition = endPos;
+    // Если оборачивания нет — обычная одна Lerp анимация
+    if (!horizontalWrap && !verticalWrap)
+    {
+      float distance = Vector3.Distance(startPos, endPos);
+      float duration = CalcDurationForDistance(distance);
 
-    // также устанавливаем позицию пустой плитки (piece2)
-    piece2.localPosition = startPos;
+      float elapsed = 0f;
+      while (elapsed < duration)
+      {
+        elapsed += Time.deltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+        t = t * t * (3f - 2f * t);
+        piece1.localPosition = Vector3.Lerp(startPos, endPos, t);
+        yield return null;
+      }
 
-    // Обновляем логическое состояние после завершения анимации
-    (pieces[index1], pieces[index2]) = (pieces[index2], pieces[index1]);
-    emptyLocation = index1;
+      piece1.localPosition = endPos;
+      piece2.localPosition = startPos;
 
-    isAnimating = false;
+      (pieces[index1], pieces[index2]) = (pieces[index2], pieces[index1]);
+      emptyLocation = index1;
+
+      isAnimating = false;
+      yield break;
+    }
+
+    // Обрабатываем оборачивание через край: два сегмента
+    if (horizontalWrap)
+    {
+      // определяем направление оборачивания
+      bool wrapLeft = (col1 == 0 && col2 == cols - 1);
+      bool wrapRight = (col1 == cols - 1 && col2 == 0);
+
+      Vector3 edgePosOut;   // позиция за текущим краем, до которой анимируем
+      Vector3 edgePosIn;    // позиция с противоположного края, откуда анимируем дальше
+
+      if (wrapLeft)
+      {
+        edgePosOut = new Vector3(minX - overshoot, startPos.y, startPos.z);
+        edgePosIn = new Vector3(maxX + overshoot, endPos.y, endPos.z);
+      }
+      else // wrapRight
+      {
+        edgePosOut = new Vector3(maxX + overshoot, startPos.y, startPos.z);
+        edgePosIn = new Vector3(minX - overshoot, endPos.y, endPos.z);
+      }
+
+      // сегмент 1
+      float dist1 = Vector3.Distance(startPos, edgePosOut);
+      float dur1 = CalcDurationForDistance(dist1);
+      float e1 = 0f;
+      while (e1 < dur1)
+      {
+        e1 += Time.deltaTime;
+        float t = Mathf.Clamp01(e1 / dur1);
+        t = t * t * (3f - 2f * t);
+        piece1.localPosition = Vector3.Lerp(startPos, edgePosOut, t);
+        yield return null;
+      }
+
+      // телепортируем на противоположный край (edgePosIn) — имитируем прохождение через границу
+      piece1.localPosition = edgePosIn;
+
+      // сегмент 2: от edgePosIn до endPos
+      float dist2 = Vector3.Distance(edgePosIn, endPos);
+      float dur2 = CalcDurationForDistance(dist2);
+      float e2 = 0f;
+      Vector3 segStart = piece1.localPosition;
+      while (e2 < dur2)
+      {
+        e2 += Time.deltaTime;
+        float t = Mathf.Clamp01(e2 / dur2);
+        t = t * t * (3f - 2f * t);
+        piece1.localPosition = Vector3.Lerp(segStart, endPos, t);
+        yield return null;
+      }
+
+      // Завершаем
+      piece1.localPosition = endPos;
+      piece2.localPosition = startPos;
+
+      (pieces[index1], pieces[index2]) = (pieces[index2], pieces[index1]);
+      emptyLocation = index1;
+
+      isAnimating = false;
+      yield break;
+    }
+
+    if (verticalWrap)
+    {
+      // определяем направление оборачивания по вертикали
+      bool wrapUp = (row1 == 0 && row2 == rows - 1);     // идём "вверх" через верхний край к нижней строке
+      bool wrapDown = (row1 == rows - 1 && row2 == 0);   // идём "вниз" через нижний край к верхней строке
+
+      Vector3 edgePosOut;
+      Vector3 edgePosIn;
+
+      if (wrapUp)
+      {
+        edgePosOut = new Vector3(startPos.x, maxY + overshoot, startPos.z);
+        edgePosIn = new Vector3(endPos.x, minY - overshoot, endPos.z);
+      }
+      else // wrapDown
+      {
+        edgePosOut = new Vector3(startPos.x, minY - overshoot, startPos.z);
+        edgePosIn = new Vector3(endPos.x, maxY + overshoot, endPos.z);
+      }
+
+      // сегмент 1
+      float dist1 = Vector3.Distance(startPos, edgePosOut);
+      float dur1 = CalcDurationForDistance(dist1);
+      float e1 = 0f;
+      while (e1 < dur1)
+      {
+        e1 += Time.deltaTime;
+        float t = Mathf.Clamp01(e1 / dur1);
+        t = t * t * (3f - 2f * t);
+        piece1.localPosition = Vector3.Lerp(startPos, edgePosOut, t);
+        yield return null;
+      }
+
+      // телепортируем на противоположный край
+      piece1.localPosition = edgePosIn;
+
+      // сегмент 2
+      float dist2 = Vector3.Distance(edgePosIn, endPos);
+      float dur2 = CalcDurationForDistance(dist2);
+      float e2 = 0f;
+      Vector3 segStart = piece1.localPosition;
+      while (e2 < dur2)
+      {
+        e2 += Time.deltaTime;
+        float t = Mathf.Clamp01(e2 / dur2);
+        t = t * t * (3f - 2f * t);
+        piece1.localPosition = Vector3.Lerp(segStart, endPos, t);
+        yield return null;
+      }
+
+      // Завершаем
+      piece1.localPosition = endPos;
+      piece2.localPosition = startPos;
+
+      (pieces[index1], pieces[index2]) = (pieces[index2], pieces[index1]);
+      emptyLocation = index1;
+
+      isAnimating = false;
+      yield break;
+    }
+
+    // На всякий случай — fallback к прежнему поведению (не должно наступать)
+    {
+      float distance = Vector3.Distance(startPos, endPos);
+      float duration = CalcDurationForDistance(distance);
+      float elapsed = 0f;
+      while (elapsed < duration)
+      {
+        elapsed += Time.deltaTime;
+        float t = Mathf.Clamp01(elapsed / duration);
+        t = t * t * (3f - 2f * t);
+        piece1.localPosition = Vector3.Lerp(startPos, endPos, t);
+        yield return null;
+      }
+      piece1.localPosition = endPos;
+      piece2.localPosition = startPos;
+      (pieces[index1], pieces[index2]) = (pieces[index2], pieces[index1]);
+      emptyLocation = index1;
+      isAnimating = false;
+    }
   }
 
   // We name the pieces in order so we can use this to check completion.
