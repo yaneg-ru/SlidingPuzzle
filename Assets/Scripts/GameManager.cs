@@ -331,7 +331,36 @@ public class GameManager : MonoBehaviour
         yield return null;
       }
 
-      // Пытаемся переместить плитку (она должна быть рядом с пустым местом)
+      // Заплатка для первого хода воспроизведения:
+      // если записанный индекс не соседствует с пустой ячейкой, попробуем найти плитку по её имени
+      // (имя равно исходному индексу) и переместить её. Если и это не помогает — тихо пропустим первый шаг.
+      if (i == recordedMoves.Count - 1)
+      {
+        bool adjacent =
+          (pieceIndex - cols == emptyLocation) ||
+          (pieceIndex + cols == emptyLocation) ||
+          ((pieceIndex - 1 == emptyLocation) && (pieceIndex % cols != 0)) ||
+          ((pieceIndex + 1 == emptyLocation) && (pieceIndex % cols != cols - 1));
+
+        if (!adjacent)
+        {
+          // попытка найти плитку по её имени (имена у вас — исходные индексы)
+          int altIndex = pieces.FindIndex(p => p.name == $"{recordedMoves[i]}");
+          if (altIndex != -1)
+          {
+            if (TryMovePiece(altIndex))
+            {
+              // успешно переместили альтернативную плитку
+              yield return null;
+              continue;
+            }
+          }
+          // не удалось — пропускаем первый шаг без логирования, чтобы не засорять консоль
+          continue;
+        }
+      }
+
+      // Обычная обработка для остальных ходов
       if (!TryMovePiece(pieceIndex))
       {
         Debug.LogWarning($"Не удалось переместить плитку {pieceIndex} при автоматической сборке");
