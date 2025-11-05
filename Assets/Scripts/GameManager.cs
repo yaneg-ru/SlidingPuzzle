@@ -222,8 +222,13 @@ public class GameManager : MonoBehaviour
   /// </summary>
   private void Shuffle()
   {
+    // Перемешивание в памяти: работаем с копией списка плиток, чтобы ничего не было видно на сцене.
     int count = 0;
-    int last = 0;
+    int last = -1;
+
+    // Копия текущих плиток (ссылка на те же Transform, но порядок меняется только в tempPieces)
+    List<Transform> tempPieces = new List<Transform>(pieces);
+    int tempEmpty = emptyLocation;
 
     // Очищаем список записанных ходов перед новым перемешиванием
     recordedMoves.Clear();
@@ -231,49 +236,83 @@ public class GameManager : MonoBehaviour
     // Обновленная длина перемешивания для прямоугольной сетки
     while (count < (rows * cols * Mathf.Max(rows, cols)))
     {
-      // Выбираем случайную позицию в прямоугольной сетке
       int rnd = Random.Range(0, rows * cols);
+      if (rnd == last) continue;
 
-      if (rnd == last) { continue; }
+      last = tempEmpty;
 
-      last = emptyLocation;
-
-      // Для перемешивания можно использовать мгновенное перемещение
-      // или сделать быструю анимацию, сохранив старую версию SwapIfValidInstant
-      if (SwapIfValidInstant(rnd, -cols, cols))
+      if (SwapIfValidInstantMemory(rnd, -cols, cols, tempPieces, ref tempEmpty))
       {
         recordedMoves.Add(rnd);
         count++;
       }
-      else if (SwapIfValidInstant(rnd, +cols, cols))
+      else if (SwapIfValidInstantMemory(rnd, +cols, cols, tempPieces, ref tempEmpty))
       {
         recordedMoves.Add(rnd);
         count++;
       }
-      else if (SwapIfValidInstant(rnd, -1, 0))
+      else if (SwapIfValidInstantMemory(rnd, -1, 0, tempPieces, ref tempEmpty))
       {
         recordedMoves.Add(rnd);
         count++;
       }
-      else if (SwapIfValidInstant(rnd, +1, cols - 1))
+      else if (SwapIfValidInstantMemory(rnd, +1, cols - 1, tempPieces, ref tempEmpty))
       {
         recordedMoves.Add(rnd);
         count++;
       }
     }
+
+    // После завершения перемешивания применяем итоговый порядок к реальным плиткам (без анимаций).
+    // Вычислим параметры сетки аналогично CreateGamePieces (используем тот же gapThickness).
+    float gapThickness = 0.01f;
+    float aspectRatio = (float)cols / (float)rows;
+    float scaleX, scaleY;
+    if (aspectRatio > 1f) { scaleX = 1f; scaleY = 1f / aspectRatio; }
+    else { scaleX = aspectRatio; scaleY = 1f; }
+    float widthX = scaleX / (float)cols;
+    float widthY = scaleY / (float)rows;
+
+    // Применяем порядок: для каждого слота i устанавливаем соответствующий Transform из tempPieces[i]
+    pieces = tempPieces;
+    for (int i = 0; i < pieces.Count; i++)
+    {
+      Transform piece = pieces[i];
+      if (piece == null) continue;
+
+      int row = i / cols;
+      int col = i % cols;
+
+      piece.localPosition = new Vector3(
+        -scaleX + (2 * widthX * col) + widthX,
+        +scaleY - (2 * widthY * row) - widthY,
+        0);
+
+      float tileSizeX = (2 * widthX) - gapThickness;
+      float tileSizeY = (2 * widthY) - gapThickness;
+      piece.localScale = new Vector3(tileSizeX, tileSizeY, 1);
+
+      // Активируем все плитки, затем скроем пустую
+      piece.gameObject.SetActive(true);
+    }
+
+    // Устанавливаем пустую позицию и скрываем соответствующую плитку
+    emptyLocation = tempEmpty;
+    if (emptyLocation >= 0 && emptyLocation < pieces.Count)
+    {
+      pieces[emptyLocation].gameObject.SetActive(false);
+    }
   }
 
   /// <summary>
-  /// Мгновенная версия обмена для перемешивания (без анимации)
+  /// Мгновенное переставление в памяти — меняет порядок в tempPieces и обновляет tempEmpty, но не трогает transforms.
   /// </summary>
-  private bool SwapIfValidInstant(int i, int offset, int colCheck)
+  private bool SwapIfValidInstantMemory(int i, int offset, int colCheck, List<Transform> tempPieces, ref int tempEmpty)
   {
-    if (((i % cols) != colCheck) && ((i + offset) == emptyLocation))
+    if (((i % cols) != colCheck) && ((i + offset) == tempEmpty))
     {
-      (pieces[i], pieces[i + offset]) = (pieces[i + offset], pieces[i]);
-      (pieces[i].localPosition, pieces[i + offset].localPosition) =
-        ((pieces[i + offset].localPosition, pieces[i].localPosition));
-      emptyLocation = i;
+      (tempPieces[i], tempPieces[i + offset]) = (tempPieces[i + offset], tempPieces[i]);
+      tempEmpty = i;
       return true;
     }
     return false;
