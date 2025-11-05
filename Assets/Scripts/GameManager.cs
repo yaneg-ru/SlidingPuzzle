@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
   private List<int> recordedMoves = new List<int>();
 
   // Количество последних позиций пустой плитки, которые следует избегать при перемешивании
-  private int shuffleHistorySize = 5;
+  private int shuffleHistorySize = 10;
 
   // Create the game setup with rows x cols pieces.
   /// <summary>
@@ -387,6 +387,7 @@ public class GameManager : MonoBehaviour
           if (!forced) break;
         }
       }
+
     }
 
     // После завершения перемешивания применяем итоговый порядок к реальным плиткам (без анимаций).
@@ -428,6 +429,30 @@ public class GameManager : MonoBehaviour
     {
       pieces[emptyLocation].gameObject.SetActive(false);
     }
+
+    // Выводим статистику по завершившемуся перемешиванию
+    LogShuffleSummary();
+  }
+
+  // Выводит в консоль краткую статистику перемешивания:
+  // - сколько ходов было выполнено,
+  // - сколько плиток сейчас не на своих местах,
+  // - общее количество плиток.
+  private void LogShuffleSummary()
+  {
+    int movesPerformed = recordedMoves != null ? recordedMoves.Count : 0;
+    int total = pieces != null ? pieces.Count : 0;
+    int misplaced = 0;
+    if (pieces != null)
+    {
+      for (int i = 0; i < pieces.Count; i++)
+      {
+        var p = pieces[i];
+        if (p == null) continue;
+        if (p.name != $"{i}") misplaced++;
+      }
+    }
+    Debug.Log($"Shuffle finished: moves={movesPerformed}, misplaced={misplaced}, total={total}");
   }
 
   /// <summary>
