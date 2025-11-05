@@ -207,7 +207,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 8
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -269,6 +269,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameTransform: {fileID: 215531184}
   piecePrefab: {fileID: 9132147156500669844, guid: 9620031b63bc33442ba8712a42b50e1f, type: 3}
+  rows: 16
+  cols: 9
 --- !u!4 &1754090835
 Transform:
   m_ObjectHideFlags: 0
