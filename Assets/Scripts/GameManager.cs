@@ -118,6 +118,9 @@ public class GameManager : MonoBehaviour
   {
     pieces = new List<Transform>();
 
+    // Инициализируем генератор случайных чисел с уникальным seed на основе времени
+    Random.InitState(System.DateTime.Now.Millisecond + System.DateTime.Now.Second * 1000);
+
     // Защитная проверка: не позволяем задать значения меньше 2 через инспектор.
     rows = Mathf.Max(2, rows);
     cols = Mathf.Max(2, cols);
