@@ -87,34 +87,30 @@ public class GameManager : MonoBehaviour
         // Присваиваем читаемое имя в виде индекса (row * cols + col).
         piece.name = $"{(row * cols) + col}";
 
-        // Делаем нижнюю правую плитку пустой — отключаем объект и сохраняем
-        // её индекс в emptyLocation (последний индекс в массиве плиток).
-        if ((row == rows - 1) && (col == cols - 1))
-        {
-          emptyLocation = (rows * cols) - 1;
-          piece.gameObject.SetActive(false);
-        }
-        else
-        {
-          // Настраиваем UV‑координаты в нормализованном пространстве (0..1),
-          // чтобы вся текстура использовалась полностью независимо от локального scaleX/scaleY.
-          // Малый зазор по UV можно настроить (uvGap), здесь поставлен 0 для корректного покрытия.
-          float uvGap = 0f;
+        // Настраиваем UV‑координаты для ВСЕХ плиток (убрали специальную обработку "нижней правой")
+        float uvGap = 0f;
 
-          Mesh mesh = piece.GetComponent<MeshFilter>().mesh;
-          Vector2[] uv = new Vector2[4];
+        Mesh mesh = piece.GetComponent<MeshFilter>().mesh;
+        Vector2[] uv = new Vector2[4];
 
-          float uvX = uvWidthX * col;
-          float uvY = uvWidthY * row;
+        float uvX = uvWidthX * col;
+        float uvY = uvWidthY * row;
 
-          uv[0] = new Vector2(uvX + uvGap, 1f - (uvY + uvWidthY - uvGap));
-          uv[1] = new Vector2(uvX + uvWidthX - uvGap, 1f - (uvY + uvWidthY - uvGap));
-          uv[2] = new Vector2(uvX + uvGap, 1f - (uvY + uvGap));
-          uv[3] = new Vector2(uvX + uvWidthX - uvGap, 1f - (uvY + uvGap));
+        uv[0] = new Vector2(uvX + uvGap, 1f - (uvY + uvWidthY - uvGap));
+        uv[1] = new Vector2(uvX + uvWidthX - uvGap, 1f - (uvY + uvWidthY - uvGap));
+        uv[2] = new Vector2(uvX + uvGap, 1f - (uvY + uvGap));
+        uv[3] = new Vector2(uvX + uvWidthX - uvGap, 1f - (uvY + uvGap));
 
-          mesh.uv = uv;
-        }
+        mesh.uv = uv;
       }
+    }
+
+    // Выбираем случайную плитку, которую сделаем пустой, и деактивируем её.
+    // Это гарантирует, что пустая плитка на старте всегда случайная.
+    if (pieces.Count > 0)
+    {
+      emptyLocation = Random.Range(0, pieces.Count);
+      pieces[emptyLocation].gameObject.SetActive(false);
     }
   }
 
