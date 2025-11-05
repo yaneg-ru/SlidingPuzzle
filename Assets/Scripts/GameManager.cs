@@ -371,6 +371,50 @@ public class GameManager : MonoBehaviour
 
     isSolving = false;
     Debug.Log("Пазл собран автоматически!");
+
+    // показываем пустую плитку и настраиваем её UV, чтобы она отображала свою часть текстуры
+    RevealEmptyTile();
+  }
+
+  // Показывает пустую плитку и настраивает её UV на ту часть текстуры, которая соответствует её исходному индексу.
+  private void RevealEmptyTile()
+  {
+    if (emptyLocation < 0 || emptyLocation >= pieces.Count) return;
+
+    Transform piece = pieces[emptyLocation];
+    if (piece == null) return;
+
+    // Если плитка уже активна — ничего не делаем
+    if (piece.gameObject.activeSelf) return;
+
+    // Вычисляем UV точно так же, как в CreateGamePieces
+    float uvWidthX = 1f / (float)cols;
+    float uvWidthY = 1f / (float)rows;
+    float uvGap = 0f;
+
+    // Имя плитки содержит её исходный индекс
+    if (!int.TryParse(piece.name, out int originalIndex)) originalIndex = 0;
+    int row = originalIndex / cols;
+    int col = originalIndex % cols;
+
+    MeshFilter mf = piece.GetComponent<MeshFilter>();
+    if (mf != null && mf.mesh != null)
+    {
+      Mesh mesh = mf.mesh;
+      Vector2[] uv = new Vector2[4];
+
+      float uvX = uvWidthX * col;
+      float uvY = uvWidthY * row;
+
+      uv[0] = new Vector2(uvX + uvGap, 1f - (uvY + uvWidthY - uvGap));
+      uv[1] = new Vector2(uvX + uvWidthX - uvGap, 1f - (uvY + uvWidthY - uvGap));
+      uv[2] = new Vector2(uvX + uvGap, 1f - (uvY + uvGap));
+      uv[3] = new Vector2(uvX + uvWidthX - uvGap, 1f - (uvY + uvGap));
+
+      mesh.uv = uv;
+    }
+
+    piece.gameObject.SetActive(true);
   }
 
   /// <summary>
