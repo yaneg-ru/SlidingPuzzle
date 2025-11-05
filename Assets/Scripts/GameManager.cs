@@ -14,9 +14,9 @@ public class GameManager : MonoBehaviour
   [SerializeField, Min(2), Tooltip("Number of columns in the puzzle (min 2).")] private int cols = 9;
 
   // Время в секундах для автоматической сборки пазла
-  private float solveTimeInSeconds = 44f;
+  private float solveTimeInSeconds = 30f;
   // Время перемещения плитки в секундах
-  private float moveDuration = 0.2f;
+  private float moveDuration = 0.05f;
 
   private bool isAnimating = false;
   private List<int> recordedMoves = new List<int>();
@@ -224,6 +224,7 @@ public class GameManager : MonoBehaviour
     // Перемешивание в памяти: работаем с копией списка плиток, чтобы ничего не было видно на сцене.
     int count = 0;
     int last = -1;
+    int prevLast = -1; // Добавляем память на два хода
 
     // Копия текущих плиток (ссылка на те же Transform, но порядок меняется только в tempPieces)
     List<Transform> tempPieces = new List<Transform>(pieces);
@@ -237,33 +238,40 @@ public class GameManager : MonoBehaviour
     while (count < targetCountSwaps)
     {
       int rnd = Random.Range(0, rows * cols);
-      if (rnd == last) continue;
+      if (rnd == last || rnd == prevLast) continue;
 
-      // убираем некорректное присваивание last = tempEmpty;
-      // теперь last обновляется только при успешном обмене (чтобы не делать сразу же обратный ход)
+      bool swapped = false;
+      int newPosition = -1;
 
       if (SwapIfValidInstantMemory(rnd, -cols, cols, tempPieces, ref tempEmpty))
       {
-        recordedMoves.Add(rnd - cols); // rnd + offset (-cols)
-        count++;
-        last = rnd;
+        newPosition = rnd - cols;
+        recordedMoves.Add(newPosition);
+        swapped = true;
       }
       else if (SwapIfValidInstantMemory(rnd, +cols, cols, tempPieces, ref tempEmpty))
       {
-        recordedMoves.Add(rnd + cols);
-        count++;
-        last = rnd;
+        newPosition = rnd + cols;
+        recordedMoves.Add(newPosition);
+        swapped = true;
       }
       else if (SwapIfValidInstantMemory(rnd, -1, 0, tempPieces, ref tempEmpty))
       {
-        recordedMoves.Add(rnd - 1);
-        count++;
-        last = rnd;
+        newPosition = rnd - 1;
+        recordedMoves.Add(newPosition);
+        swapped = true;
       }
       else if (SwapIfValidInstantMemory(rnd, +1, cols - 1, tempPieces, ref tempEmpty))
       {
-        recordedMoves.Add(rnd + 1);
+        newPosition = rnd + 1;
+        recordedMoves.Add(newPosition);
+        swapped = true;
+      }
+
+      if (swapped)
+      {
         count++;
+        prevLast = last;
         last = rnd;
       }
     }
