@@ -14,12 +14,15 @@ public class GameManager : MonoBehaviour
   [SerializeField, Min(2), Tooltip("Number of columns in the puzzle (min 2).")] private int cols = 9;
 
   // Время в секундах для автоматической сборки пазла
-  private float solveTimeInSeconds = 30f;
+  private float solveTimeInSeconds = 15f;
   // Время перемещения плитки в секундах
   private float moveDuration = 0.05f;
 
   private bool isAnimating = false;
   private List<int> recordedMoves = new List<int>();
+
+  // Количество последних позиций пустой плитки, которые следует избегать при перемешивании
+  private int shuffleHistorySize = 5;
 
   // Create the game setup with rows x cols pieces.
   /// <summary>
@@ -243,8 +246,7 @@ public class GameManager : MonoBehaviour
   {
     // Перемешивание в памяти: работаем с копией списка плиток, чтобы ничего не было видно на сцене.
     int count = 0;
-    int last = -1;
-    int prevLast = -1; // Добавляем память на два хода
+    Queue<int> recentPositions = new Queue<int>(); // История последних N позиций
 
     // Копия текущих плиток (ссылка на те же Transform, но порядок меняется только в tempPieces)
     List<Transform> tempPieces = new List<Transform>(pieces);
@@ -258,7 +260,9 @@ public class GameManager : MonoBehaviour
     while (count < targetCountSwaps)
     {
       int rnd = Random.Range(0, rows * cols);
-      if (rnd == last || rnd == prevLast) continue;
+
+      // Проверяем, что случайная позиция не в истории последних N позиций
+      if (recentPositions.Contains(rnd)) continue;
 
       bool swapped = false;
       int target = -1;
@@ -291,8 +295,15 @@ public class GameManager : MonoBehaviour
       if (swapped)
       {
         count++;
-        prevLast = last;
-        last = rnd;
+
+        // Добавляем текущую позицию в историю
+        recentPositions.Enqueue(rnd);
+
+        // Если история превысила лимит, удаляем самую старую позицию
+        if (recentPositions.Count > shuffleHistorySize)
+        {
+          recentPositions.Dequeue();
+        }
       }
     }
 
