@@ -138,27 +138,44 @@ public class GameManager : MonoBehaviour
 
   /// <summary>
   /// Пытается выполнить обмен плитки в позиции <paramref name="i"/> с плиткой, находящейся
-  /// на позиции <c>i + offset</c>, если это допустимый ход в текущем состоянии поля.
+  /// на позиции с учётом offset, если это допустимый ход в текущем состоянии поля.
   /// 
-  /// Обновлено для работы с прямоугольной сеткой rows x cols.
+  /// Поддерживает оборачивание по вертикали и горизонтали для прямоугольной сетки rows x cols.
   /// </summary>
   /// <param name="i">Индекс плитки в списке pieces, которую мы пытаемся переместить.</param>
   /// <param name="offset">Смещение для поиска целевой (соседней) ячейки: -cols (вверх), +cols (вниз), -1 (влево), +1 (вправо).</param>
-  /// <param name="colCheck">
-  /// Значение для проверки столбца, используемое для предотвращения горизонтального оборачивания.
-  /// Для вертикальных ходов это поле обычно равно cols.
-  /// </param>
+  /// <param name="colCheck">Не используется при оборачивании, оставлен для обратной совместимости.</param>
   private bool SwapIfValid(int i, int offset, int colCheck)
   {
-    // Обновленная проверка для прямоугольной сетки
-    if (((i % cols) != colCheck) && ((i + offset) == emptyLocation))
+    int target;
+
+    // Вертикальное перемещение (вверх/вниз с оборачиванием)
+    if (Mathf.Abs(offset) == cols)
     {
-      // Запускаем анимацию вместо мгновенной смены позиций
-      StartCoroutine(AnimateSwap(i, i + offset));
+      // Корректно обрабатываем отрицательные offset для оборачивания
+      target = ((i + offset) % pieces.Count + pieces.Count) % pieces.Count;
+    }
+    // Горизонтальное перемещение (влево/вправо с оборачиванием)
+    else if (Mathf.Abs(offset) == 1)
+    {
+      int currentRow = i / cols;
+      int currentCol = i % cols;
+
+      // Вычисляем новый столбец с оборачиванием (корректно обрабатываем отрицательные значения)
+      int newCol = ((currentCol + offset) % cols + cols) % cols;
+      target = currentRow * cols + newCol;
+    }
+    else
+    {
+      return false;
+    }
+
+    if (target == emptyLocation)
+    {
+      StartCoroutine(AnimateSwap(i, target));
       return true;
     }
 
-    // Если любое из условий не выполнено — ход недопустим.
     return false;
   }
 
@@ -241,30 +258,30 @@ public class GameManager : MonoBehaviour
       if (rnd == last || rnd == prevLast) continue;
 
       bool swapped = false;
-      int newPosition = -1;
+      int target = -1;
 
-      if (SwapIfValidInstantMemory(rnd, -cols, cols, tempPieces, ref tempEmpty))
+      // Вверх с оборачиванием
+      if (SwapIfValidInstantMemory(rnd, -cols, cols, tempPieces, ref tempEmpty, out target))
       {
-        newPosition = rnd - cols;
-        recordedMoves.Add(newPosition);
+        recordedMoves.Add(target);
         swapped = true;
       }
-      else if (SwapIfValidInstantMemory(rnd, +cols, cols, tempPieces, ref tempEmpty))
+      // Вниз с оборачиванием
+      else if (SwapIfValidInstantMemory(rnd, +cols, cols, tempPieces, ref tempEmpty, out target))
       {
-        newPosition = rnd + cols;
-        recordedMoves.Add(newPosition);
+        recordedMoves.Add(target);
         swapped = true;
       }
-      else if (SwapIfValidInstantMemory(rnd, -1, 0, tempPieces, ref tempEmpty))
+      // Влево с оборачиванием
+      else if (SwapIfValidInstantMemory(rnd, -1, 0, tempPieces, ref tempEmpty, out target))
       {
-        newPosition = rnd - 1;
-        recordedMoves.Add(newPosition);
+        recordedMoves.Add(target);
         swapped = true;
       }
-      else if (SwapIfValidInstantMemory(rnd, +1, cols - 1, tempPieces, ref tempEmpty))
+      // Вправо с оборачиванием
+      else if (SwapIfValidInstantMemory(rnd, +1, cols - 1, tempPieces, ref tempEmpty, out target))
       {
-        newPosition = rnd + 1;
-        recordedMoves.Add(newPosition);
+        recordedMoves.Add(target);
         swapped = true;
       }
 
@@ -319,15 +336,43 @@ public class GameManager : MonoBehaviour
 
   /// <summary>
   /// Мгновенное переставление в памяти — меняет порядок в tempPieces и обновляет tempEmpty, но не трогает transforms.
+  /// Поддерживает оборачивание по вертикали и горизонтали.
   /// </summary>
-  private bool SwapIfValidInstantMemory(int i, int offset, int colCheck, List<Transform> tempPieces, ref int tempEmpty)
+  private bool SwapIfValidInstantMemory(int i, int offset, int colCheck, List<Transform> tempPieces, ref int tempEmpty, out int calculatedTarget)
   {
-    if (((i % cols) != colCheck) && ((i + offset) == tempEmpty))
+    calculatedTarget = -1;
+    int target;
+
+    // Вертикальное перемещение (вверх/вниз с оборачиванием)
+    if (Mathf.Abs(offset) == cols)
     {
-      (tempPieces[i], tempPieces[i + offset]) = (tempPieces[i + offset], tempPieces[i]);
+      // Корректно обрабатываем отрицательные offset для оборачивания
+      target = ((i + offset) % tempPieces.Count + tempPieces.Count) % tempPieces.Count;
+    }
+    // Горизонтальное перемещение (влево/вправо с оборачиванием)
+    else if (Mathf.Abs(offset) == 1)
+    {
+      int currentRow = i / cols;
+      int currentCol = i % cols;
+
+      // Вычисляем новый столбец с оборачиванием (корректно обрабатываем отрицательные значения)
+      int newCol = ((currentCol + offset) % cols + cols) % cols;
+      target = currentRow * cols + newCol;
+    }
+    else
+    {
+      return false;
+    }
+
+    if (target == tempEmpty)
+    {
+      // Меняем местами элементы в списке: плитку и пустую позицию
+      (tempPieces[i], tempPieces[target]) = (tempPieces[target], tempPieces[i]);
       tempEmpty = i;
+      calculatedTarget = target;
       return true;
     }
+
     return false;
   }
 
