@@ -14,6 +14,10 @@ public class GameManager : MonoBehaviour
   [SerializeField, Min(2), Tooltip("Number of columns in the puzzle (min 2).")] private int cols = 9;
   private bool shuffling = false;
 
+  // Новые поля для анимации
+  [SerializeField, Tooltip("Время перемещения плитки в секундах")] private float moveDuration = 0.05f;
+  private bool isAnimating = false;
+
   // Create the game setup with rows x cols pieces.
   /// <summary>
   /// Создаёт поле головоломки размера <c>rows x cols</c>, инстанцируя префабы плиток
@@ -142,7 +146,7 @@ public class GameManager : MonoBehaviour
 
     // 2) Обработка клика левой кнопкой мыши:
     // Реагируем только на нажатие, а не на удержание (GetMouseButtonDown(0)).
-    if (Input.GetMouseButtonDown(0))
+    if (Input.GetMouseButtonDown(0) && !isAnimating)
     {
       // Преобразуем экранные координаты курсора в координаты мира и выполняем Raycast2D.
       // Vector2.zero указывает, что луч — это по сути проверка точки.
@@ -187,22 +191,54 @@ public class GameManager : MonoBehaviour
     // Обновленная проверка для прямоугольной сетки
     if (((i % cols) != colCheck) && ((i + offset) == emptyLocation))
     {
-      // Обмен в состоянии игры: меняем позиции в списке pieces, чтобы логика отражала новый порядок.
-      (pieces[i], pieces[i + offset]) = (pieces[i + offset], pieces[i]);
-
-      // Обмен локальных позиций (Transform) у соответствующих объектов, чтобы визуально
-      // отобразить перемещение плиток на сцене.
-      (pieces[i].localPosition, pieces[i + offset].localPosition) = ((pieces[i + offset].localPosition, pieces[i].localPosition));
-
-      // Обновляем индекс пустой ячейки — теперь она находится в позиции i (туда переместилась плитка).
-      emptyLocation = i;
-
-      // Возвращаем true, сигнализируя об успешном ходе.
+      // Запускаем анимацию вместо мгновенной смены позиций
+      StartCoroutine(AnimateSwap(i, i + offset));
       return true;
     }
 
     // Если любое из условий не выполнено — ход недопустим.
     return false;
+  }
+
+  /// <summary>
+  /// Анимирует плавное перемещение плитки из позиции index1 в позицию index2
+  /// </summary>
+  private IEnumerator AnimateSwap(int index1, int index2)
+  {
+    isAnimating = true;
+
+    Transform piece1 = pieces[index1];
+    Transform piece2 = pieces[index2];
+
+    Vector3 startPos = piece1.localPosition;
+    Vector3 endPos = piece2.localPosition;
+
+    float elapsed = 0f;
+
+    // Плавное перемещение с использованием Lerp
+    while (elapsed < moveDuration)
+    {
+      elapsed += Time.deltaTime;
+      float t = Mathf.Clamp01(elapsed / moveDuration);
+
+      // Можно использовать SmoothStep для более плавного движения
+      t = t * t * (3f - 2f * t);
+
+      piece1.localPosition = Vector3.Lerp(startPos, endPos, t);
+      yield return null;
+    }
+
+    // Гарантируем точную конечную позицию
+    piece1.localPosition = endPos;
+
+    // также устанавливаем позицию пустой плитки (piece2)
+    piece2.localPosition = startPos;
+
+    // Обновляем логическое состояние после завершения анимации
+    (pieces[index1], pieces[index2]) = (pieces[index2], pieces[index1]);
+    emptyLocation = index1;
+
+    isAnimating = false;
   }
 
   // We name the pieces in order so we can use this to check completion.
@@ -243,24 +279,41 @@ public class GameManager : MonoBehaviour
 
       last = emptyLocation;
 
-      // Обновленные направления для прямоугольной сетки
-      if (SwapIfValid(rnd, -cols, cols))
+      // Для перемешивания можно использовать мгновенное перемещение
+      // или сделать быструю анимацию, сохранив старую версию SwapIfValidInstant
+      if (SwapIfValidInstant(rnd, -cols, cols))
       {
         count++;
       }
-      else if (SwapIfValid(rnd, +cols, cols))
+      else if (SwapIfValidInstant(rnd, +cols, cols))
       {
         count++;
       }
-      else if (SwapIfValid(rnd, -1, 0))
+      else if (SwapIfValidInstant(rnd, -1, 0))
       {
         count++;
       }
-      else if (SwapIfValid(rnd, +1, cols - 1))
+      else if (SwapIfValidInstant(rnd, +1, cols - 1))
       {
         count++;
       }
     }
+  }
+
+  /// <summary>
+  /// Мгновенная версия обмена для перемешивания (без анимации)
+  /// </summary>
+  private bool SwapIfValidInstant(int i, int offset, int colCheck)
+  {
+    if (((i % cols) != colCheck) && ((i + offset) == emptyLocation))
+    {
+      (pieces[i], pieces[i + offset]) = (pieces[i + offset], pieces[i]);
+      (pieces[i].localPosition, pieces[i + offset].localPosition) =
+        ((pieces[i + offset].localPosition, pieces[i].localPosition));
+      emptyLocation = i;
+      return true;
+    }
+    return false;
   }
 
   // Автоматическая корректировка значений в редакторе (и при изменении в инспекторе).
