@@ -12,7 +12,6 @@ public class GameManager : MonoBehaviour
   private int emptyLocation;
   [SerializeField, Min(2), Tooltip("Number of rows in the puzzle (min 2).")] private int rows = 16;
   [SerializeField, Min(2), Tooltip("Number of columns in the puzzle (min 2).")] private int cols = 9;
-  private bool shuffling = false;
 
   // Время перемещения плитки в секундах
   private float moveDuration = 0.05f;
@@ -22,7 +21,6 @@ public class GameManager : MonoBehaviour
   [SerializeField, Tooltip("Время в секундах для автоматической сборки пазла")]
   private float solveTimeInSeconds = 10f;
   private List<int> recordedMoves = new List<int>();
-  private bool isSolving = false;
 
   // Create the game setup with rows x cols pieces.
   /// <summary>
@@ -223,13 +221,6 @@ public class GameManager : MonoBehaviour
     return true;
   }
 
-  private IEnumerator WaitShuffle(float duration)
-  {
-    yield return new WaitForSeconds(duration);
-    Shuffle();
-    shuffling = false;
-  }
-
   /// <summary>
   /// Перемешивает поле плиток для прямоугольной сетки rows x cols.
   /// </summary>
@@ -318,8 +309,6 @@ public class GameManager : MonoBehaviour
   /// </summary>
   private IEnumerator AutoSolve()
   {
-    isSolving = true;
-
     // Проигрываем ходы в обратном порядке
     for (int i = recordedMoves.Count - 1; i >= 0; i--)
     {
@@ -369,8 +358,6 @@ public class GameManager : MonoBehaviour
       yield return null;
     }
 
-    isSolving = false;
-    Debug.Log("Пазл собран автоматически!");
 
     // показываем пустую плитку и настраиваем её UV, чтобы она отображала свою часть текстуры
     RevealEmptyTile();
