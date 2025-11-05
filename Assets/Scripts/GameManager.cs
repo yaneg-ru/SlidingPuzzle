@@ -13,13 +13,12 @@ public class GameManager : MonoBehaviour
   [SerializeField, Min(2), Tooltip("Number of rows in the puzzle (min 2).")] private int rows = 16;
   [SerializeField, Min(2), Tooltip("Number of columns in the puzzle (min 2).")] private int cols = 9;
 
+  // Время в секундах для автоматической сборки пазла
+  private float solveTimeInSeconds = 1f;
   // Время перемещения плитки в секундах
   private float moveDuration = 0.05f;
-  private bool isAnimating = false;
 
-  // Запись ходов и автоматическое решение
-  [SerializeField, Tooltip("Время в секундах для автоматической сборки пазла")]
-  private float solveTimeInSeconds = 10f;
+  private bool isAnimating = false;
   private List<int> recordedMoves = new List<int>();
 
   // Create the game setup with rows x cols pieces.
@@ -111,6 +110,9 @@ public class GameManager : MonoBehaviour
     {
       emptyLocation = Random.Range(0, pieces.Count);
       pieces[emptyLocation].gameObject.SetActive(false);
+
+      // log initial empty index
+      Debug.Log($"Initial emptyLocation: {emptyLocation}");
     }
   }
 
@@ -234,7 +236,8 @@ public class GameManager : MonoBehaviour
     recordedMoves.Clear();
 
     // Обновленная длина перемешивания для прямоугольной сетки
-    while (count < (rows * cols * Mathf.Max(rows, cols)))
+    int targetCountSwaps = (int)(solveTimeInSeconds / moveDuration);
+    while (count < targetCountSwaps)
     {
       int rnd = Random.Range(0, rows * cols);
       if (rnd == last) continue;
@@ -352,16 +355,21 @@ public class GameManager : MonoBehaviour
       // Ждём завершения текущей анимации
       while (isAnimating)
       {
+        // пауза корутины до следующего кадра
         yield return null;
       }
 
       TryMovePiece(pieceIndex);
+      // пауза корутины до следующего кадра
       yield return null;
     }
 
 
     // показываем пустую плитку и настраиваем её UV, чтобы она отображала свою часть текстуры
-    RevealEmptyTile();
+    // RevealEmptyTile();
+
+    // логируем финальную позицию пустой ячейки после автосбора
+    Debug.Log($"Final emptyLocation: {emptyLocation}");
   }
 
   // Показывает пустую плитку и настраивает её UV на ту часть текстуры, которая соответствует её исходному индексу.
