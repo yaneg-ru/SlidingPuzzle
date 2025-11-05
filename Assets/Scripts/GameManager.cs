@@ -14,9 +14,15 @@ public class GameManager : MonoBehaviour
   [SerializeField, Min(2), Tooltip("Number of columns in the puzzle (min 2).")] private int cols = 9;
   private bool shuffling = false;
 
-  // Новые поля для анимации
-  [SerializeField, Tooltip("Время перемещения плитки в секундах")] private float moveDuration = 0.05f;
+  // Время перемещения плитки в секундах
+  private float moveDuration = 0.05f;
   private bool isAnimating = false;
+
+  // Запись ходов и автоматическое решение
+  [SerializeField, Tooltip("Время в секундах для автоматической сборки пазла")]
+  private float solveTimeInSeconds = 10f;
+  private List<int> recordedMoves = new List<int>();
+  private bool isSolving = false;
 
   // Create the game setup with rows x cols pieces.
   /// <summary>
@@ -117,7 +123,7 @@ public class GameManager : MonoBehaviour
     CreateGamePieces(0.01f);
 
     // Выполняем перемешивание один раз при старте
-    Shuffle();
+    StartCoroutine(ShuffleAndSolve());
   }
 
   /// <summary>
@@ -223,6 +229,9 @@ public class GameManager : MonoBehaviour
     int count = 0;
     int last = 0;
 
+    // Очищаем список записанных ходов перед новым перемешиванием
+    recordedMoves.Clear();
+
     // Обновленная длина перемешивания для прямоугольной сетки
     while (count < (rows * cols * Mathf.Max(rows, cols)))
     {
@@ -237,18 +246,22 @@ public class GameManager : MonoBehaviour
       // или сделать быструю анимацию, сохранив старую версию SwapIfValidInstant
       if (SwapIfValidInstant(rnd, -cols, cols))
       {
+        recordedMoves.Add(rnd);
         count++;
       }
       else if (SwapIfValidInstant(rnd, +cols, cols))
       {
+        recordedMoves.Add(rnd);
         count++;
       }
       else if (SwapIfValidInstant(rnd, -1, 0))
       {
+        recordedMoves.Add(rnd);
         count++;
       }
       else if (SwapIfValidInstant(rnd, +1, cols - 1))
       {
+        recordedMoves.Add(rnd);
         count++;
       }
     }
@@ -268,6 +281,69 @@ public class GameManager : MonoBehaviour
       return true;
     }
     return false;
+  }
+
+  /// <summary>
+  /// Корутина для перемешивания и последующей автоматической сборки
+  /// </summary>
+  private IEnumerator ShuffleAndSolve()
+  {
+    // Перемешиваем и записываем ходы
+    Shuffle();
+
+    // Небольшая пауза перед началом сборки
+    yield return new WaitForSeconds(0.5f);
+
+    // Рассчитываем длительность одного хода для укладывания в заданное время
+    if (recordedMoves.Count > 0)
+    {
+      moveDuration = solveTimeInSeconds / recordedMoves.Count;
+    }
+
+    // Запускаем автоматическую сборку
+    yield return StartCoroutine(AutoSolve());
+  }
+
+  /// <summary>
+  /// Автоматически решает пазл, воспроизводя записанные ходы в обратном порядке
+  /// </summary>
+  private IEnumerator AutoSolve()
+  {
+    isSolving = true;
+
+    // Проигрываем ходы в обратном порядке
+    for (int i = recordedMoves.Count - 1; i >= 0; i--)
+    {
+      int pieceIndex = recordedMoves[i];
+
+      // Ждём завершения текущей анимации
+      while (isAnimating)
+      {
+        yield return null;
+      }
+
+      // Пытаемся переместить плитку (она должна быть рядом с пустым местом)
+      if (!TryMovePiece(pieceIndex))
+      {
+        Debug.LogWarning($"Не удалось переместить плитку {pieceIndex} при автоматической сборке");
+      }
+
+      yield return null;
+    }
+
+    isSolving = false;
+    Debug.Log("Пазл собран автоматически!");
+  }
+
+  /// <summary>
+  /// Пытается переместить плитку с индексом pieceIndex
+  /// </summary>
+  private bool TryMovePiece(int pieceIndex)
+  {
+    return SwapIfValid(pieceIndex, -cols, cols) ||
+           SwapIfValid(pieceIndex, +cols, cols) ||
+           SwapIfValid(pieceIndex, -1, 0) ||
+           SwapIfValid(pieceIndex, +1, cols - 1);
   }
 
   // Автоматическая корректировка значений в редакторе (и при изменении в инспекторе).
