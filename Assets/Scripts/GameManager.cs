@@ -8,6 +8,15 @@ public class GameManager : MonoBehaviour
   [SerializeField] private Transform gameTransform;
   [SerializeField] private Transform piecePrefab;
 
+  // Список Transform'ов всех плиток в текущем порядке "логического" поля.
+  // - Каждый элемент — Transform инстанциированной плитки (префаб) и соответствует одной ячейке сетки.
+  // - Порядок: слева направо, сверху вниз (индекс = row * cols + col). Этот порядок используется
+  //   как логическое представление доски — обмены в списке моделируют ходы.
+  // - Пустая клетка представлена тем, что соответствующая GameObject может быть деактивирована
+  //   (pieces[emptyLocation].gameObject.SetActive(false)) — сам Transform при этом остаётся в списке.
+  // - Элементы списка теоретически могут быть null (например, если объект удалён), поэтому код должен
+  //   учитывать это при обращениях.
+  // - Многие методы (Shuffle, AnimateSwap, RevealEmptyTile и т.д.) полагаются на корректность этого списка.
   private List<Transform> pieces;
   private int emptyLocation;
   [SerializeField, Min(2), Tooltip("Number of rows in the puzzle (min 2).")] private int rows = 16;
