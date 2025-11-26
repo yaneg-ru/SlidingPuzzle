@@ -6,8 +6,9 @@ public class TemplateManager : MonoBehaviour
 {
 
     public static int N; // Размерность пазлов N x N
-    [SerializeField]
-    private int inspectorN = 3;
+    public static float widthOfPiece; // Ширина одной плитки пазла, рассчитывается как 1 / N
+    [SerializeField] private int NxN = 3;
+    [ReadOnly, SerializeField] private float pieceWidth;
 
     public GameObject piecePrefabForPuzzleOne; // Префаб для плитки пазла #1
     public GameObject piecePrefabForPuzzleTwo; // Префаб для плитки пазла #2
@@ -16,7 +17,9 @@ public class TemplateManager : MonoBehaviour
 
     void Awake()
     {
-        N = inspectorN;
+        N = NxN;
+        widthOfPiece = 1f / N;
+        pieceWidth = Mathf.Round(widthOfPiece * 100f) / 100f; // округление до 2 знаков после запятой;
     }
 
     void Start()

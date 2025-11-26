@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 2183987750711887712}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.52075714, y: 0.52075714, z: 1}
+  m_LocalScale: {x: 0.52075714, y: 0.52075714, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -96,5 +96,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c072905ff1784bf0b3f54cff2d24a6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pieceID: 0
-  numberOfPuzzle: 1
+  pieceNumber: 0
+  currentNumberOnBoard: 0
+  gapThickness: 0.01
