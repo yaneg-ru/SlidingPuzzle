@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8821388376490077025}
   - component: {fileID: -1417253625662110141}
   m_Layer: 0
-  m_Name: PuzzlePiece
+  m_Name: PiecePrefabForPuzzleOne
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

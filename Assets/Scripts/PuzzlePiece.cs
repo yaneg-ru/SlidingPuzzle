@@ -9,21 +9,23 @@ public class PuzzlePiece : MonoBehaviour
     public int pieceID;
     public int numberOfPuzzle;
 
-    private Transform puzzleBoard;
 
+    // статический фабричный метод для создания экземпляра префаба для плитки пазла
+    public static GameObject AddPiece(GameObject prefab, Transform board, int pieceNumber)
+    {
+        GameObject instanceObject = GameObject.Instantiate(prefab, board);
+        // масштабирование в зависимости от N
+        float n = TemplateManager.N != 0 ? (float)TemplateManager.N : 1f;
+        instanceObject.transform.localScale = new Vector3(1f / n, 1f / n, 1f / n);
+        // присваиваем материал в зависимости от номера пазла
+        MeshRenderer meshRenderer = instanceObject.GetComponent<MeshRenderer>();
 
-    // public static PuzzlePiece
+        return instanceObject;
+    }
 
     void Start()
     {
-        if (numberOfPuzzle == 1)
-        {
-            puzzleBoard = GameObject.Find("PuzzleOneBoard").transform;
-        }
-        else if (numberOfPuzzle == 2)
-        {
-            puzzleBoard = GameObject.Find("PuzzleTwoBoard").transform;
-        }
+
     }
 
 
