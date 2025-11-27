@@ -318,9 +318,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f298bdb42252840a5a63d85a5b61c4a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inspectorN: 3
-  piecePrefabForPuzzleOne: {fileID: 2183987750711887712, guid: 9c16d2823223d4ff885a6f545db04b32, type: 3}
-  piecePrefabForPuzzleTwo: {fileID: 2183987750711887712, guid: 04b15845614bd4f18ac3b7dadfd3b219, type: 3}
+  NxN: 3
+  pieceWidth: 0
+  piecePrefabForPuzzleOne: {fileID: 5125195553676360061, guid: 9c16d2823223d4ff885a6f545db04b32, type: 3}
+  piecePrefabForPuzzleTwo: {fileID: 5125195553676360061, guid: fd2f5b554f0144ecda2ee74b10f4722e, type: 3}
   puzzleOneBoard: {fileID: 1839061396}
   puzzleTwoBoard: {fileID: 2055815084}
 --- !u!1 &1839061394
@@ -539,7 +540,7 @@ VideoPlayer:
   m_ControlledAudioTrackCount: 1
   m_PlayOnAwake: 1
   m_SkipOnDrop: 1
-  m_Looping: 0
+  m_Looping: 1
   m_WaitForFirstFrame: 1
   m_FrameReadyEventEnabled: 0
   m_VideoShaders: []

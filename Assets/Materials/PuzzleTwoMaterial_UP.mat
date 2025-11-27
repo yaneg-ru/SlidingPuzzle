@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PuzzleTwoMaterial
+  m_Name: PuzzleTwoMaterial_UP
   m_Shader: {fileID: 4800000, guid: 4c0ffe0ad115c40d395c10910a1b3663, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords:

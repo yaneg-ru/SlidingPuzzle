@@ -7,13 +7,16 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PuzzleOneMaterial
+  m_Name: PuzzleTwoMaterial_DOWN
   m_Shader: {fileID: 4800000, guid: 4c0ffe0ad115c40d395c10910a1b3663, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _ALPHAPREMULTIPLY_ON
+  - _COLORCOLOR_ON
+  - _GLOSSYREFLECTIONS_OFF
   - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-  m_LightmapFlags: 0
+  - _SPECULARHIGHLIGHTS_OFF
+  m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 3001
@@ -47,7 +50,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 8400000, guid: 54f90f3c8982d4cec9400a61fc4e32bd, type: 2}
+        m_Texture: {fileID: 10906, guid: 0000000000000000f000000000000000, type: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -69,15 +72,15 @@ Material:
     m_Ints: []
     m_Floats:
     - PixelSnap: 0
-    - _A: 0
+    - _A: 1
     - _B: 1
     - _BlendOp: 0
-    - _Brightness: 0
+    - _Brightness: 1
     - _BumpScale: 1
     - _CameraFadingEnabled: 0
     - _CameraFarFadeDistance: 2
     - _CameraNearFadeDistance: 1
-    - _ColorMode: 0
+    - _ColorMode: 4
     - _Cull: 2
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
@@ -92,7 +95,7 @@ Material:
     - _G: 1
     - _GlossMapScale: 1
     - _Glossiness: 1
-    - _GlossyReflections: 1
+    - _GlossyReflections: 0
     - _Invert: 0
     - _LightingEnabled: 0
     - _Metallic: 0
@@ -104,13 +107,13 @@ Material:
     - _SoftParticlesEnabled: 0
     - _SoftParticlesFarFadeDistance: 1
     - _SoftParticlesNearFadeDistance: 0
-    - _SpecularHighlights: 1
+    - _SpecularHighlights: 0
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 0
     m_Colors:
     - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.19874972, g: 0.990566, b: 0, a: 1}
     - _ColorAddSubDiff: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0.6226415, g: 0.0734247, b: 0.0734247, a: 1}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}

@@ -24,8 +24,11 @@ public class TemplateManager : MonoBehaviour
 
     void Start()
     {
-        GameObject puzzlePiece1 = PuzzlePiece.AddPiece(prefab: piecePrefabForPuzzleOne, board: puzzleOneBoard, pieceNumber: 1);
-        GameObject puzzlePiece2 = PuzzlePiece.AddPiece(prefab: piecePrefabForPuzzleTwo, board: puzzleTwoBoard, pieceNumber: 2);
+        for (int i = 1; i <= N * N; i++)
+        {
+            GameObject puzzlePiece1 = PuzzlePiece.AddPiece(prefab: piecePrefabForPuzzleOne, board: puzzleOneBoard, pieceNumber: i);
+            GameObject puzzlePiece2 = PuzzlePiece.AddPiece(prefab: piecePrefabForPuzzleTwo, board: puzzleTwoBoard, pieceNumber: i);
+        }
 
         //    if (numberOfPuzzle == 1)
         //     {
