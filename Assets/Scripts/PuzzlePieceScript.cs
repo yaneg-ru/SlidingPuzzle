@@ -18,9 +18,9 @@ public class PuzzlePieceScript : MonoBehaviour
     }
 
     // статический фабричный метод для создания экземпляра префаба для плитки пазла
-    public static GameObject AddPiece(GameObject prefab, Transform board, int pieceNumber)
+    public static GameObject AddPiece(GameObject prefab, GameObject board, int pieceNumber)
     {
-        GameObject piece = GameObject.Instantiate(prefab, board);
+        GameObject piece = GameObject.Instantiate(prefab, board.GetComponent<Transform>());
         piece.name = $"{pieceNumber}";
 
         // сохраняем значения номера плитки в скрипте PuzzlePiece
@@ -39,6 +39,27 @@ public class PuzzlePieceScript : MonoBehaviour
         // обновляем локальную позицию плитки на доске
         pieceScript.updateLocalPosition();
 
+        // Настраиваем UV‑координаты для текстуры плитки пазла
+        Mesh mesh = pieceUP.GetComponent<MeshFilter>().mesh;
+        Vector2[] uv = new Vector2[4];
+
+        float widthOfPiece = TemplateManagerScript.widthOfPiece;
+
+        // Используем рассчитанные строку и столбец плитки (1‑based)
+        int col = pieceScript.currentColumnOnBoard;
+        int row = pieceScript.currentRowOnBoard;
+
+        // UV в диапазоне [0,1): смещение по сетке NxN
+        float uvX = (col - 1) * widthOfPiece;
+        float uvY = (row - 1) * widthOfPiece;
+
+        // Назначаем UV‑координаты четырём вершинам квадрата плитки
+        uv[0] = new Vector2(uvX, 1f - (uvY + widthOfPiece)); // левый нижний угол
+        uv[1] = new Vector2(uvX + widthOfPiece, 1f - (uvY + widthOfPiece)); // правый нижний угол
+        uv[2] = new Vector2(uvX, 1f - uvY); // левый верхний угол
+        uv[3] = new Vector2(uvX + widthOfPiece, 1f - uvY); // правый верхний угол
+
+        mesh.uv = uv;
 
         return piece;
     }

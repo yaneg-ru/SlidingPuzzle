@@ -18,7 +18,7 @@ public class PuzzleBoardScript : MonoBehaviour
         widthOfPiece = TemplateManagerScript.widthOfPiece;
         for (int i = 1; i <= N * N; i++)
         {
-            GameObject puzzlePiece = PuzzlePieceScript.AddPiece(prefab: piecePrefab, board: this.transform, pieceNumber: i);
+            GameObject puzzlePiece = PuzzlePieceScript.AddPiece(prefab: piecePrefab, board: this.gameObject, pieceNumber: i);
             piecesOnBoard.Add(puzzlePiece);
         }
     }
