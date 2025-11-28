@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class R_and_D_Sample : MonoBehaviour
+public class R_and_D_Script : MonoBehaviour
 {
 
   [SerializeField] private Transform gameTransform;

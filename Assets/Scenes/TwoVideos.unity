@@ -322,8 +322,8 @@ MonoBehaviour:
   pieceWidth: 0
   piecePrefabForPuzzleOne: {fileID: 5125195553676360061, guid: 9c16d2823223d4ff885a6f545db04b32, type: 3}
   piecePrefabForPuzzleTwo: {fileID: 5125195553676360061, guid: fd2f5b554f0144ecda2ee74b10f4722e, type: 3}
-  puzzleOneBoard: {fileID: 1839061396}
-  puzzleTwoBoard: {fileID: 2055815084}
+  puzzleOneBoard: {fileID: 1839061394}
+  puzzleTwoBoard: {fileID: 2055815082}
 --- !u!1 &1839061394
 GameObject:
   m_ObjectHideFlags: 0
@@ -334,6 +334,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1839061396}
   - component: {fileID: 1839061395}
+  - component: {fileID: 1839061397}
   m_Layer: 0
   m_Name: PuzzleOneBoard
   m_TagString: Untagged
@@ -408,6 +409,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1839061397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839061394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899b886265cf84f309e50ce42cf2a36f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  N: 0
+  widthOfPiece: 0
 --- !u!1 &2055815082
 GameObject:
   m_ObjectHideFlags: 0
@@ -418,6 +433,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2055815084}
   - component: {fileID: 2055815083}
+  - component: {fileID: 2055815085}
   m_Layer: 0
   m_Name: PuzzleTwoBoard
   m_TagString: Untagged
@@ -492,6 +508,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2055815085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2055815082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899b886265cf84f309e50ce42cf2a36f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  N: 0
+  widthOfPiece: 0
 --- !u!1 &2131798466
 GameObject:
   m_ObjectHideFlags: 0

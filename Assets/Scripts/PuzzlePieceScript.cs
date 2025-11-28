@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-public class PuzzlePiece : MonoBehaviour
+public class PuzzlePieceScript : MonoBehaviour
 {
 
     [ReadOnly] public int pieceNumber;
@@ -24,7 +24,7 @@ public class PuzzlePiece : MonoBehaviour
         piece.name = $"{pieceNumber}";
 
         // сохраняем значения номера плитки в скрипте PuzzlePiece
-        PuzzlePiece pieceScript = piece.GetComponent<PuzzlePiece>();
+        PuzzlePieceScript pieceScript = piece.GetComponent<PuzzlePieceScript>();
         pieceScript.pieceNumber = pieceNumber;
         pieceScript.currentNumberOnBoard = pieceNumber;
 
@@ -32,7 +32,7 @@ public class PuzzlePiece : MonoBehaviour
         pieceScript.calcRowAndColumnFromCurrentNumberOnBoard();
 
         // масштабирование
-        piece.transform.localScale = new Vector3(TemplateManager.widthOfPiece, TemplateManager.widthOfPiece, 0);
+        piece.transform.localScale = new Vector3(TemplateManagerScript.widthOfPiece, TemplateManagerScript.widthOfPiece, 0);
         GameObject pieceUP = piece.transform.Find("UP").gameObject;
         pieceUP.transform.localScale = new Vector3(pieceScript.scaleOfUpPiece, pieceScript.scaleOfUpPiece, 1f);
 
@@ -48,14 +48,14 @@ public class PuzzlePiece : MonoBehaviour
     // правый нижний угол — (N, N)
     private void calcRowAndColumnFromCurrentNumberOnBoard()
     {
-        int N = TemplateManager.N;
+        int N = TemplateManagerScript.N;
         currentRowOnBoard = ((currentNumberOnBoard - 1) / N) + 1;
         currentColumnOnBoard = ((currentNumberOnBoard - 1) % N) + 1;
     }
 
     private void updateLocalPosition()
     {
-        float pieceSize = TemplateManager.widthOfPiece;
+        float pieceSize = TemplateManagerScript.widthOfPiece;
         float x = -0.5f + (pieceSize * (currentColumnOnBoard - 1)) + pieceSize / 2f;
         float y = +0.5f - (pieceSize * (currentRowOnBoard - 1)) - pieceSize / 2f;
         this.transform.localPosition = new Vector3(x, y, 0f);
