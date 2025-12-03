@@ -7,6 +7,7 @@ public class TemplateManagerScript : MonoBehaviour
 
     public static int N; // Размерность пазлов N x N
     public static float widthOfPiece; // Ширина одной плитки пазла, рассчитывается как 1 / N
+
     [SerializeField] private int NxN = 3;
     [ReadOnly, SerializeField] private float pieceWidth;
 
@@ -14,6 +15,13 @@ public class TemplateManagerScript : MonoBehaviour
     public GameObject piecePrefabForPuzzleTwo; // Префаб для плитки пазла #2
     public GameObject puzzleOneBoard; // Доска пазла #1
     public GameObject puzzleTwoBoard; // Доска пазла #2
+    public int countVarietiesShuffleOfPuzzle = 100; // Количество вариантов перемешивания пазла для выбора лучшего
+    public int countMovesForOneVarietyPuzzleShuffle = 20; // Количество ходов для перемешивания пазла в одном варианте
+
+
+    private PuzzleBoardScript puzzleOneBoardScript;
+    private PuzzleBoardScript puzzleTwoBoardScript;
+
 
     void Awake()
     {
@@ -24,8 +32,16 @@ public class TemplateManagerScript : MonoBehaviour
 
     void Start()
     {
-        puzzleOneBoard.GetComponent<PuzzleBoardScript>().PutInitialPieces(piecePrefabForPuzzleOne);
-        puzzleTwoBoard.GetComponent<PuzzleBoardScript>().PutInitialPieces(piecePrefabForPuzzleTwo);
+        puzzleOneBoardScript = puzzleOneBoard.GetComponent<PuzzleBoardScript>();
+        puzzleTwoBoardScript = puzzleTwoBoard.GetComponent<PuzzleBoardScript>();
+
+        // Начальная расстановка плиток на досках пазлов
+        puzzleOneBoardScript.InitialPlacePiecesOnBoard(piecePrefabForPuzzleOne, "1 PuzzleBoard");
+        puzzleTwoBoardScript.InitialPlacePiecesOnBoard(piecePrefabForPuzzleTwo, "2 PuzzleBoard");
+
+        // Создание вариантов перемешивания пазлов
+        puzzleOneBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle);
+        puzzleTwoBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle);
     }
 
     void Update()

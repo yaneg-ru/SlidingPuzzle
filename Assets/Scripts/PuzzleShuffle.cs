@@ -209,7 +209,7 @@ public class PuzzleShuffle
     // countVarieties - количество различных вариантов перемешивания пазла
     // countMovesForShuffle - количество ходов для перемешивания пазла
     // возвращает вариант перемешивания пазла с наибольшим количеством неправильно расположенных плиток
-    public static ShuffledPiecesArrangement GetBestVarietyShuffleOfPuzzle(int countVarieties, int countMovesForShuffle)
+    public static ShuffledPiecesArrangement GetBestVarietyShuffleOfPuzzle(int countVarieties, int countMovesForShuffle, string boardId)
     {
         var varieties = new List<ShuffledPiecesArrangement>();
 
@@ -217,6 +217,7 @@ public class PuzzleShuffle
         {
             ShuffledPiecesArrangement arrangement = new ShuffledPiecesArrangement();
             arrangement.Shuffle(countMovesForShuffle); // перемешиваем пазл countMovesForShuffle ходов
+            // Debug.Log($"Variety {i + 1}: Misplaced Pieces = {arrangement.CountMisplacedPieces}");
             varieties.Add(arrangement);
         }
 
@@ -231,7 +232,7 @@ public class PuzzleShuffle
                 bestVariety = variety;
             }
         }
-
+        Debug.Log($"For {boardId} Best variety selected: Misplaced Pieces = {bestVariety?.CountMisplacedPieces}");
         return bestVariety;
     }
 

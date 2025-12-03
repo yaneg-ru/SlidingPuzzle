@@ -8,12 +8,16 @@ public class PuzzleBoardScript : MonoBehaviour
     [ReadOnly] public float widthOfPiece;
     private List<GameObject> piecesOnBoard = new List<GameObject>();
 
+    private ShuffledPiecesArrangement shuffledPiecesArrangement;
+    private string boardId;
+
     void Awake()
     {
     }
 
-    public void InitialPlacePiecesOnBoard(GameObject piecePrefab)
+    public void InitialPlacePiecesOnBoard(GameObject piecePrefab, string boardId)
     {
+        this.boardId = boardId;
         N = TemplateManagerScript.N;
         widthOfPiece = TemplateManagerScript.widthOfPiece;
         for (int i = 1; i <= N * N; i++)
@@ -21,6 +25,11 @@ public class PuzzleBoardScript : MonoBehaviour
             GameObject puzzlePiece = PuzzlePieceScript.AddPiece(prefab: piecePrefab, board: this.gameObject, pieceNumber: i);
             piecesOnBoard.Add(puzzlePiece);
         }
+    }
+
+    public void ShufflePieces(int countVarieties, int countMovesForShuffle)
+    {
+        shuffledPiecesArrangement = PuzzleShuffle.GetBestVarietyShuffleOfPuzzle(countVarieties, countMovesForShuffle, boardId);
     }
 
     void Start()
