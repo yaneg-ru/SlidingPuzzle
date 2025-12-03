@@ -14,7 +14,7 @@ public class PuzzlePieceScript : MonoBehaviour
     // правый верхний угол - N
     // левый нижний угол - N*(N-1)+1
     // правый нижний угол - N*N
-    [ReadOnly] public int currentNumberOnBoard;
+    [ReadOnly] public int current1DCoordOnBoard;
 
 
     // Текущие строка и столбец плитки на доске (1-based indexing)
@@ -32,7 +32,12 @@ public class PuzzlePieceScript : MonoBehaviour
     }
 
     // статический фабричный метод для создания экземпляра префаба для плитки пазла
-    public static GameObject AddPiece(GameObject prefab, GameObject board, int pieceNumber)
+    public static GameObject AddPiece(
+        GameObject prefab,
+        GameObject board,
+        int pieceNumber,
+        bool isUpRendered = true,
+        bool isDownRendered = true)
     {
         GameObject piece = GameObject.Instantiate(prefab, board.GetComponent<Transform>());
         piece.name = $"{pieceNumber}";
@@ -40,7 +45,7 @@ public class PuzzlePieceScript : MonoBehaviour
         // сохраняем значения номера плитки в скрипте PuzzlePiece
         PuzzlePieceScript pieceScript = piece.GetComponent<PuzzlePieceScript>();
         pieceScript.pieceNumber = pieceNumber;
-        pieceScript.currentNumberOnBoard = pieceNumber;
+        pieceScript.current1DCoordOnBoard = pieceNumber;
 
         // рассчитываем и сохраняем текущие строку и столбец плитки на доске
         pieceScript.calcRowAndColumnFromCurrentNumberOnBoard();
@@ -50,8 +55,13 @@ public class PuzzlePieceScript : MonoBehaviour
         GameObject pieceUP = piece.transform.Find("UP").gameObject;
         pieceUP.transform.localScale = new Vector3(pieceScript.scaleOfUpPiece, pieceScript.scaleOfUpPiece, 1f);
 
+        // настройка видимости верхней и нижней части плитки пазла
+        pieceUP.GetComponent<MeshRenderer>().enabled = isUpRendered;
+        GameObject pieceDOWN = piece.transform.Find("DOWN").gameObject;
+        pieceDOWN.GetComponent<MeshRenderer>().enabled = isDownRendered;
+
         // обновляем локальную позицию плитки на доске
-        pieceScript.updateLocalPosition();
+        pieceScript.updateLocalPositionByRowAndColum();
 
         // Настраиваем UV‑координаты для текстуры плитки пазла
         Mesh mesh = pieceUP.GetComponent<MeshFilter>().mesh;
@@ -84,11 +94,11 @@ public class PuzzlePieceScript : MonoBehaviour
     private void calcRowAndColumnFromCurrentNumberOnBoard()
     {
         int N = TemplateManagerScript.N;
-        currentRowOnBoard = ((currentNumberOnBoard - 1) / N) + 1;
-        currentColumnOnBoard = ((currentNumberOnBoard - 1) % N) + 1;
+        currentRowOnBoard = ((current1DCoordOnBoard - 1) / N) + 1;
+        currentColumnOnBoard = ((current1DCoordOnBoard - 1) % N) + 1;
     }
 
-    private void updateLocalPosition()
+    private void updateLocalPositionByRowAndColum()
     {
         float pieceSize = TemplateManagerScript.widthOfPiece;
         float x = -0.5f + (pieceSize * (currentColumnOnBoard - 1)) + pieceSize / 2f;

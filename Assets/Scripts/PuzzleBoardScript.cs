@@ -15,14 +15,23 @@ public class PuzzleBoardScript : MonoBehaviour
     {
     }
 
-    public void InitialPlacePiecesOnBoard(GameObject piecePrefab, string boardId)
+    public void InitialPlacePiecesOnBoard(
+        GameObject piecePrefab,
+        string boardId,
+        bool isUpRendered = true,
+        bool isDownRendered = true)
     {
         this.boardId = boardId;
         N = TemplateManagerScript.N;
         widthOfPiece = TemplateManagerScript.widthOfPiece;
         for (int i = 1; i <= N * N; i++)
         {
-            GameObject puzzlePiece = PuzzlePieceScript.AddPiece(prefab: piecePrefab, board: this.gameObject, pieceNumber: i);
+            GameObject puzzlePiece = PuzzlePieceScript.AddPiece(
+                prefab: piecePrefab,
+                board: this.gameObject,
+                pieceNumber: i,
+                isUpRendered: isUpRendered,
+                isDownRendered: isDownRendered);
             piecesOnBoard.Add(puzzlePiece);
         }
     }

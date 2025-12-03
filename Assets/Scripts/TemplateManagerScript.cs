@@ -36,8 +36,16 @@ public class TemplateManagerScript : MonoBehaviour
         puzzleTwoBoardScript = puzzleTwoBoard.GetComponent<PuzzleBoardScript>();
 
         // Начальная расстановка плиток на досках пазлов
-        puzzleOneBoardScript.InitialPlacePiecesOnBoard(piecePrefabForPuzzleOne, "1 PuzzleBoard");
-        puzzleTwoBoardScript.InitialPlacePiecesOnBoard(piecePrefabForPuzzleTwo, "2 PuzzleBoard");
+        puzzleOneBoardScript.InitialPlacePiecesOnBoard(
+           piecePrefab: piecePrefabForPuzzleOne,
+           boardId: "1 PuzzleBoard",
+           isUpRendered: true,
+           isDownRendered: true);
+        puzzleTwoBoardScript.InitialPlacePiecesOnBoard(
+            piecePrefab: piecePrefabForPuzzleTwo,
+            boardId: "2 PuzzleBoard",
+            isUpRendered: true,
+            isDownRendered: false);
 
         // Создание вариантов перемешивания пазлов
         var misplacedPiecesCountPuzzleOne = puzzleOneBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle);
