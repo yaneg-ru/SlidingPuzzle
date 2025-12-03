@@ -208,8 +208,15 @@ public class PuzzleShuffle
 
     // countVarieties - количество различных вариантов перемешивания пазла
     // countMovesForShuffle - количество ходов для перемешивания пазла
-    // возвращает вариант перемешивания пазла с наибольшим количеством неправильно расположенных плиток
-    public static ShuffledPiecesArrangement GetBestVarietyShuffleOfPuzzle(int countVarieties, int countMovesForShuffle, string boardId)
+    // targetCountMisplacedPieces - целевое количество неправильно расположенных плиток (если нужно)
+    // boardId - идентификатор доски пазла для логов
+    // возвращает вариант перемешивания пазла с наибольшим количеством неправильно расположенных плиток 
+    // или вариант у которого CountMisplacedPieces == targetCountMisplacedPieces
+    public static ShuffledPiecesArrangement GetBestVarietyShuffleOfPuzzle(
+        int countVarieties,
+        int countMovesForShuffle,
+        string boardId,
+        int? targetCountMisplacedPieces = null)
     {
         var varieties = new List<ShuffledPiecesArrangement>();
 
@@ -226,10 +233,19 @@ public class PuzzleShuffle
         ShuffledPiecesArrangement bestVariety = null;
         foreach (var variety in varieties)
         {
-            if (variety.CountMisplacedPieces != null && variety.CountMisplacedPieces >= maxMisplacedPieces)
+            if (variety.CountMisplacedPieces != null)
             {
-                maxMisplacedPieces = variety.CountMisplacedPieces;
-                bestVariety = variety;
+
+                if (targetCountMisplacedPieces != null && variety.CountMisplacedPieces == targetCountMisplacedPieces)
+                {
+                    Debug.Log($"For {boardId} Best variety selected (target met): Misplaced Pieces = {variety.CountMisplacedPieces}");
+                    return variety;
+                }
+                if (variety.CountMisplacedPieces >= maxMisplacedPieces)
+                {
+                    maxMisplacedPieces = variety.CountMisplacedPieces;
+                    bestVariety = variety;
+                }
             }
         }
         Debug.Log($"For {boardId} Best variety selected: Misplaced Pieces = {bestVariety?.CountMisplacedPieces}");

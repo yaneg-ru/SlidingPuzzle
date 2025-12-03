@@ -40,8 +40,8 @@ public class TemplateManagerScript : MonoBehaviour
         puzzleTwoBoardScript.InitialPlacePiecesOnBoard(piecePrefabForPuzzleTwo, "2 PuzzleBoard");
 
         // Создание вариантов перемешивания пазлов
-        puzzleOneBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle);
-        puzzleTwoBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle);
+        var misplacedPiecesCountPuzzleOne = puzzleOneBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle);
+        puzzleTwoBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle, misplacedPiecesCountPuzzleOne);
     }
 
     void Update()

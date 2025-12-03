@@ -27,9 +27,16 @@ public class PuzzleBoardScript : MonoBehaviour
         }
     }
 
-    public void ShufflePieces(int countVarieties, int countMovesForShuffle)
+    // Создание вариантов перемешивания пазла
+    // Возвращает количество неправильно расположенных плиток в лучшем найденном варианте перемешивания
+    public int ShufflePieces(int countVarieties, int countMovesForShuffle, int? targetCountMisplacedPieces = null)
     {
-        shuffledPiecesArrangement = PuzzleShuffle.GetBestVarietyShuffleOfPuzzle(countVarieties, countMovesForShuffle, boardId);
+        shuffledPiecesArrangement = PuzzleShuffle.GetBestVarietyShuffleOfPuzzle(
+            countVarieties,
+            countMovesForShuffle,
+            boardId,
+            targetCountMisplacedPieces);
+        return shuffledPiecesArrangement.CountMisplacedPieces ?? 0;
     }
 
     void Start()
