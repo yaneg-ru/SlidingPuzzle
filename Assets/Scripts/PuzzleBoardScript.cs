@@ -12,7 +12,7 @@ public class PuzzleBoardScript : MonoBehaviour
     {
     }
 
-    public void PutInitialPieces(GameObject piecePrefab)
+    public void InitialPlacePiecesOnBoard(GameObject piecePrefab)
     {
         N = TemplateManagerScript.N;
         widthOfPiece = TemplateManagerScript.widthOfPiece;

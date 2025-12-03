@@ -7,7 +7,21 @@ public class PuzzlePieceScript : MonoBehaviour
 {
 
     [ReadOnly] public int pieceNumber;
+
+    // Текущий номер плитки на доске (меняется при перемещении)
+    // Используется как критерий для определения находится ли плитка на своём месте
+    // левый верхний угол - 1
+    // правый верхний угол - N
+    // левый нижний угол - N*(N-1)+1
+    // правый нижний угол - N*N
     [ReadOnly] public int currentNumberOnBoard;
+
+
+    // Текущие строка и столбец плитки на доске (1-based indexing)
+    // левый верхний угол - (1,1)
+    // правый верхний угол - (1,N)
+    // левый нижний угол - (N,1)
+    // правый нижний угол - (N,N)
     [ReadOnly] public int currentColumnOnBoard;
     [ReadOnly] public int currentRowOnBoard;
     [ReadOnly] public float scaleOfUpPiece;
