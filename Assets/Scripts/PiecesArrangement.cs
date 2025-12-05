@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-// Класс для перемешивания плиток пазла 
-// и последующей пошаговой сборки пазла
-public class ShuffledPiecesArrangement
+// Класс содержащий виртуальную карту расположения плиток пазла 
+// - перемешивание плиток пазла
+// - пошаговая сборка пазла
+public class PiecesArrangement
 {
     // В массиве хранятся номера плиток пазла
     // 1-based indexing [row, column]
@@ -40,7 +41,7 @@ public class ShuffledPiecesArrangement
     // Инициализируем генератор случайных чисел
     private static readonly System.Random rnd = new System.Random();
 
-    public ShuffledPiecesArrangement()
+    public PiecesArrangement()
     {
         // Изначально все плитки на своих местах
         CountMisplacedPieces = 0;
@@ -212,17 +213,17 @@ public class PuzzleShuffle
     // boardId - идентификатор доски пазла для логов
     // возвращает вариант перемешивания пазла с наибольшим количеством неправильно расположенных плиток 
     // или вариант у которого CountMisplacedPieces == targetCountMisplacedPieces
-    public static ShuffledPiecesArrangement GetBestVarietyShuffleOfPuzzle(
+    public static PiecesArrangement GetBestVarietyShuffleOfPuzzle(
         int countVarieties,
         int countMovesForShuffle,
         string boardId,
         int? targetCountMisplacedPieces = null)
     {
-        var varieties = new List<ShuffledPiecesArrangement>();
+        var varieties = new List<PiecesArrangement>();
 
         for (int i = 0; i < countVarieties; i++)
         {
-            ShuffledPiecesArrangement arrangement = new ShuffledPiecesArrangement();
+            PiecesArrangement arrangement = new PiecesArrangement();
             arrangement.Shuffle(countMovesForShuffle); // перемешиваем пазл countMovesForShuffle ходов
             // Debug.Log($"Variety {i + 1}: Misplaced Pieces = {arrangement.CountMisplacedPieces}");
             varieties.Add(arrangement);
@@ -230,7 +231,7 @@ public class PuzzleShuffle
 
         // находим вариант с наибольшим количеством неправильно расположенных плиток
         int? maxMisplacedPieces = -1;
-        ShuffledPiecesArrangement bestVariety = null;
+        PiecesArrangement bestVariety = null;
         foreach (var variety in varieties)
         {
             if (variety.CountMisplacedPieces != null)

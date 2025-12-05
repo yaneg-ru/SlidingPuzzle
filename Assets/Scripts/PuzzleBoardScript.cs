@@ -8,7 +8,7 @@ public class PuzzleBoardScript : MonoBehaviour
     [ReadOnly] public float widthOfPiece;
     private List<GameObject> piecesOnBoard = new List<GameObject>();
 
-    private ShuffledPiecesArrangement shuffledPiecesArrangement;
+    private PiecesArrangement piecesArrangement;
     private string boardId;
 
     void Awake()
@@ -40,12 +40,12 @@ public class PuzzleBoardScript : MonoBehaviour
     // Возвращает количество неправильно расположенных плиток в лучшем найденном варианте перемешивания
     public int ShufflePieces(int countVarieties, int countMovesForShuffle, int? targetCountMisplacedPieces = null)
     {
-        shuffledPiecesArrangement = PuzzleShuffle.GetBestVarietyShuffleOfPuzzle(
+        piecesArrangement = PuzzleShuffle.GetBestVarietyShuffleOfPuzzle(
             countVarieties,
             countMovesForShuffle,
             boardId,
             targetCountMisplacedPieces);
-        return shuffledPiecesArrangement.CountMisplacedPieces ?? 0;
+        return piecesArrangement.CountMisplacedPieces ?? 0;
     }
 
     void Start()
