@@ -48,8 +48,12 @@ public class TemplateManagerScript : MonoBehaviour
             isDownRendered: false);
 
         // Создание вариантов перемешивания пазлов
-        var misplacedPiecesCountPuzzleOne = puzzleOneBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle);
-        puzzleTwoBoardScript.ShufflePieces(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle, misplacedPiecesCountPuzzleOne);
+        var misplacedPiecesCountPuzzleOne = puzzleOneBoardScript.CreateShuffledPiecesArrangement(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle);
+        puzzleTwoBoardScript.CreateShuffledPiecesArrangement(countVarietiesShuffleOfPuzzle, countMovesForOneVarietyPuzzleShuffle, misplacedPiecesCountPuzzleOne);
+
+        // Применение перемешанного расположения плиток пазлов к реальным плиткам на досках
+        puzzleOneBoardScript.ApplyPiecesArrangementToBoard();
+        puzzleTwoBoardScript.ApplyPiecesArrangementToBoard();
     }
 
     void Update()

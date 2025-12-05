@@ -6,15 +6,14 @@ using UnityEngine;
 public class PuzzlePieceScript : MonoBehaviour
 {
 
-    [ReadOnly] public int pieceNumber;
+    [ReadOnly] public int PieceNumber;
 
-    // Текущий номер плитки на доске (меняется при перемещении)
-    // Используется как критерий для определения находится ли плитка на своём месте
+    // Текущий 1D координата плитки на доске (меняется при перемещении)
     // левый верхний угол - 1
     // правый верхний угол - N
     // левый нижний угол - N*(N-1)+1
     // правый нижний угол - N*N
-    [ReadOnly] public int current1DCoordOnBoard;
+    [ReadOnly] public int Current1DCoordOnBoard;
 
 
     // Текущие строка и столбец плитки на доске (1-based indexing)
@@ -22,13 +21,15 @@ public class PuzzlePieceScript : MonoBehaviour
     // правый верхний угол - (1,N)
     // левый нижний угол - (N,1)
     // правый нижний угол - (N,N)
-    [ReadOnly] public int currentColumnOnBoard;
-    [ReadOnly] public int currentRowOnBoard;
-    [ReadOnly] public float scaleOfUpPiece;
+    [ReadOnly] public int CurrentRowOnBoard;
+    [ReadOnly] public int CurrentColumnOnBoard;
+
+    // Коэффициент масштаба для верхнего слоя плитки
+    [ReadOnly] public float ScaleOfUpPiece;
 
     void Awake()
     {
-        scaleOfUpPiece = 0.95f;
+        ScaleOfUpPiece = 0.95f;
     }
 
     // статический фабричный метод для создания экземпляра префаба для плитки пазла
@@ -44,8 +45,8 @@ public class PuzzlePieceScript : MonoBehaviour
 
         // сохраняем значения номера плитки в скрипте PuzzlePiece
         PuzzlePieceScript pieceScript = piece.GetComponent<PuzzlePieceScript>();
-        pieceScript.pieceNumber = pieceNumber;
-        pieceScript.current1DCoordOnBoard = pieceNumber;
+        pieceScript.PieceNumber = pieceNumber;
+        pieceScript.Current1DCoordOnBoard = pieceNumber;
 
         // рассчитываем и сохраняем текущие строку и столбец плитки на доске
         pieceScript.calcRowAndColumnFromCurrentNumberOnBoard();
@@ -53,7 +54,7 @@ public class PuzzlePieceScript : MonoBehaviour
         // масштабирование
         piece.transform.localScale = new Vector3(TemplateManagerScript.widthOfPiece, TemplateManagerScript.widthOfPiece, 0);
         GameObject pieceUP = piece.transform.Find("UP").gameObject;
-        pieceUP.transform.localScale = new Vector3(pieceScript.scaleOfUpPiece, pieceScript.scaleOfUpPiece, 1f);
+        pieceUP.transform.localScale = new Vector3(pieceScript.ScaleOfUpPiece, pieceScript.ScaleOfUpPiece, 1f);
 
         // настройка видимости верхней и нижней части плитки пазла
         pieceUP.GetComponent<MeshRenderer>().enabled = isUpRendered;
@@ -70,8 +71,8 @@ public class PuzzlePieceScript : MonoBehaviour
         float widthOfPiece = TemplateManagerScript.widthOfPiece;
 
         // Используем рассчитанные строку и столбец плитки (1‑based)
-        int col = pieceScript.currentColumnOnBoard;
-        int row = pieceScript.currentRowOnBoard;
+        int col = pieceScript.CurrentColumnOnBoard;
+        int row = pieceScript.CurrentRowOnBoard;
 
         // UV в диапазоне [0,1): смещение по сетке NxN
         float uvX = (col - 1) * widthOfPiece;
@@ -88,21 +89,58 @@ public class PuzzlePieceScript : MonoBehaviour
         return piece;
     }
 
+    // Метод, который обновляет позицию плитки пазла 
+    // в соответствии переданной виртуальной картой расположения плиток пазла
+    // Если pieceNumber совпадает с EmptyPieceNumber из piecesArrangement 
+    // тогда отключаем у плитки рендеринг UP объекта
+    public void UpdateLocalPositionByPiecesArrangement(PiecesArrangement piecesArrangement)
+    {
+        int N = TemplateManagerScript.N;
+
+        // Ищем позицию текущей плитки в массиве Arrangement
+        for (int row = 1; row <= N; row++)
+        {
+            for (int col = 1; col <= N; col++)
+            {
+                if (piecesArrangement.Arrangement[row, col] == PieceNumber)
+                {
+                    // Обновляем текущую 1D координату плитки на доске
+                    Current1DCoordOnBoard = (row - 1) * N + col;
+
+                    // Пересчитываем строку и столбец из новой координаты
+                    calcRowAndColumnFromCurrentNumberOnBoard();
+
+                    // Обновляем локальную позицию плитки на доске
+                    updateLocalPositionByRowAndColum();
+
+                    // Если это пустая плитка, отключаем рендеринг UP объекта
+                    if (PieceNumber == piecesArrangement.EmptyPieceNumber)
+                    {
+                        GameObject pieceUP = this.transform.Find("UP").gameObject;
+                        pieceUP.GetComponent<MeshRenderer>().enabled = false;
+                    }
+
+                    return;
+                }
+            }
+        }
+    }
+
     // расчёт в 1‑базовой системе: строка и столбец начинаются с 1
     // левый верхний угол — (1, 1) 
     // правый нижний угол — (N, N)
     private void calcRowAndColumnFromCurrentNumberOnBoard()
     {
         int N = TemplateManagerScript.N;
-        currentRowOnBoard = ((current1DCoordOnBoard - 1) / N) + 1;
-        currentColumnOnBoard = ((current1DCoordOnBoard - 1) % N) + 1;
+        CurrentRowOnBoard = ((Current1DCoordOnBoard - 1) / N) + 1;
+        CurrentColumnOnBoard = ((Current1DCoordOnBoard - 1) % N) + 1;
     }
 
     private void updateLocalPositionByRowAndColum()
     {
         float pieceSize = TemplateManagerScript.widthOfPiece;
-        float x = -0.5f + (pieceSize * (currentColumnOnBoard - 1)) + pieceSize / 2f;
-        float y = +0.5f - (pieceSize * (currentRowOnBoard - 1)) - pieceSize / 2f;
+        float x = -0.5f + (pieceSize * (CurrentColumnOnBoard - 1)) + pieceSize / 2f;
+        float y = +0.5f - (pieceSize * (CurrentRowOnBoard - 1)) - pieceSize / 2f;
         this.transform.localPosition = new Vector3(x, y, 0f);
     }
 

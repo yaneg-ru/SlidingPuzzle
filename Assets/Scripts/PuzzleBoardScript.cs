@@ -38,7 +38,7 @@ public class PuzzleBoardScript : MonoBehaviour
 
     // Создание вариантов перемешивания пазла
     // Возвращает количество неправильно расположенных плиток в лучшем найденном варианте перемешивания
-    public int ShufflePieces(int countVarieties, int countMovesForShuffle, int? targetCountMisplacedPieces = null)
+    public int CreateShuffledPiecesArrangement(int countVarieties, int countMovesForShuffle, int? targetCountMisplacedPieces = null)
     {
         piecesArrangement = PuzzleShuffle.GetBestVarietyShuffleOfPuzzle(
             countVarieties,
@@ -46,6 +46,16 @@ public class PuzzleBoardScript : MonoBehaviour
             boardId,
             targetCountMisplacedPieces);
         return piecesArrangement.CountMisplacedPieces ?? 0;
+    }
+
+    // Применение расположения плиток пазла из piecesArrangement к реальным плиткам на доске
+    public void ApplyPiecesArrangementToBoard()
+    {
+        foreach (GameObject piece in piecesOnBoard)
+        {
+            PuzzlePieceScript pieceScript = piece.GetComponent<PuzzlePieceScript>();
+            pieceScript.UpdateLocalPositionByPiecesArrangement(piecesArrangement);
+        }
     }
 
     void Start()
