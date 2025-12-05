@@ -38,6 +38,8 @@ public class PiecesArrangement
 
     int n; // размерность пазла N x N
 
+    int currentBuildStep; // текущий шаг сборки пазла
+
     // Инициализируем генератор случайных чисел
     private static readonly System.Random rnd = new System.Random();
 
@@ -70,9 +72,13 @@ public class PiecesArrangement
     // На каждом шаге выбирается случайное движение пустой плитки
     // Если на каком то шаге мы получаем ситуацию, когда CountMisplacedPieces == 0, 
     // тогда перемешивание прекращается и в переменную CountMisplacedPieces присваивается значение null
-    public void Shuffle(int numberOfMoves)
+    public void Shuffle(int countSteps)
     {
-        for (int moveIndex = 0; moveIndex < numberOfMoves; moveIndex++)
+        // сразу устанавливаем текущий шаг сборки пазла в общее количество шагов
+        // при сборке пазла это значение будет уменьшаться
+        currentBuildStep = countSteps;
+
+        for (int stepIndex = 0; stepIndex < countSteps; stepIndex++)
         {
             string move = GetRandomMove();
             EmptyPieceMoveHistory.Add(move);
@@ -111,6 +117,61 @@ public class PiecesArrangement
                 break;
             }
         }
+        // After shuffle (including early break), align currentBuildStep to actual number of moves
+        currentBuildStep = EmptyPieceMoveHistory.Count;
+    }
+
+    // Метод выполняет один шаг сборки пазла
+    public void BuildStep()
+    {
+        if (currentBuildStep <= 0 || EmptyPieceMoveHistory.Count == 0)
+        {
+            return; // все шаги сборки уже выполнены или история пуста
+        }
+
+        // Safe index calculation to avoid out-of-range when history < currentBuildStep
+        int idx = EmptyPieceMoveHistory.Count - currentBuildStep;
+        if (idx < 0 || idx >= EmptyPieceMoveHistory.Count)
+        {
+            // Align and bail out if inconsistent; caller can invoke again next frame
+            currentBuildStep = Mathf.Min(currentBuildStep, EmptyPieceMoveHistory.Count);
+            return;
+        }
+
+        // получаем исходный ход пустой плитки для текущего шага сборки
+        string recordedMove = EmptyPieceMoveHistory[idx];
+
+        // для отмены шага применяем обратное движение
+        string reverseMove = InvertMove(recordedMove);
+
+        int newEmptyCoord = GetEmptyPieceCoordByMove(reverseMove);
+
+        // Координаты текущей и новой позиции пустой плитки (в 1D)
+        int oldCoord = EmptyPieceCoord;
+        EmptyPieceCoord = newEmptyCoord;
+
+        // Переводим 1D координаты в 2D индексы (row, col)
+        var oldRowCol = Coord1DToRowCol(oldCoord);
+        int oldRow = oldRowCol[0];
+        int oldCol = oldRowCol[1];
+
+        var newRowCol = Coord1DToRowCol(newEmptyCoord);
+        int newRow = newRowCol[0];
+        int newCol = newRowCol[1];
+
+        // Меняем местами значения в массиве Arrangement
+        int temp = Arrangement[oldRow, oldCol];
+        Arrangement[oldRow, oldCol] = Arrangement[newRow, newCol];
+        Arrangement[newRow, newCol] = temp;
+
+        // Обновляем очередь недавних позиций пустой плитки
+        AddEmptyCoordToRecent(newEmptyCoord);
+
+        // Пересчитываем количество неправильно расположенных плиток
+        CalcCountMisplacedPieces();
+
+        // уменьшаем текущий шаг сборки пазла
+        currentBuildStep--;
     }
 
     private int[] Coord1DToRowCol(int coord)
@@ -200,6 +261,18 @@ public class PiecesArrangement
             }
         }
         CountMisplacedPieces = count;
+    }
+
+    private string InvertMove(string move)
+    {
+        switch (move.ToLowerInvariant())
+        {
+            case "up": return "down";
+            case "down": return "up";
+            case "left": return "right";
+            case "right": return "left";
+            default: throw new System.ArgumentException("Invalid move direction");
+        }
     }
 
 }
