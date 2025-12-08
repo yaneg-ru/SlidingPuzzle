@@ -19,4 +19,27 @@ public class Coord1DHelper
         var N = TemplateManagerScript.N;
         return (row - 1) * N + col;
     }
+
+    // Проверка возможности перемещения из current в target без "обёртывания"
+    public static bool IsPossibleMoveWithoutWrapping(int current, int target)
+    {
+        var N = TemplateManagerScript.N;
+        var currentRowCol = Convert1DCoordToRowCol(current);
+        var targetRowCol = Convert1DCoordToRowCol(target);
+        int currentRow = currentRowCol[0];
+        int currentCol = currentRowCol[1];
+        int targetRow = targetRowCol[0];
+        int targetCol = targetRowCol[1];
+
+        // Проверяем, что цель находится на расстоянии 1 по строке или столбцу
+        if (currentRow == targetRow && Mathf.Abs(currentCol - targetCol) == 1)
+        {
+            return true; // Горизонтальное перемещение
+        }
+        if (currentCol == targetCol && Mathf.Abs(currentRow - targetRow) == 1)
+        {
+            return true; // Вертикальное перемещение
+        }
+        return false; //  Перемещение невозможно без обёртывания
+    }
 }

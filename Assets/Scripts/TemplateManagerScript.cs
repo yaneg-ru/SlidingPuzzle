@@ -6,7 +6,7 @@ public class TemplateManagerScript : MonoBehaviour
 {
 
     public static int N; // Размерность пазлов N x N
-    public static float widthOfPiece; // Ширина одной плитки пазла, рассчитывается как 1 / N
+    public static float WidthOfPiece; // Ширина одной плитки пазла, рассчитывается как 1 / N
 
     [SerializeField] private int NxN = 3;
     [ReadOnly, SerializeField] private float pieceWidth;
@@ -26,8 +26,8 @@ public class TemplateManagerScript : MonoBehaviour
     void Awake()
     {
         N = NxN;
-        widthOfPiece = 1f / N;
-        pieceWidth = Mathf.Round(widthOfPiece * 100f) / 100f; // округление до 2 знаков после запятой;
+        WidthOfPiece = 1f / N;
+        pieceWidth = Mathf.Round(WidthOfPiece * 100f) / 100f; // округление до 2 знаков после запятой;
     }
 
     void Start()

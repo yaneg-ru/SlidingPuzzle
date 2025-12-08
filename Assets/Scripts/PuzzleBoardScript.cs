@@ -5,7 +5,7 @@ using UnityEngine;
 public class PuzzleBoardScript : MonoBehaviour
 {
     [ReadOnly] public int N;
-    [ReadOnly] public float widthOfPiece;
+    [ReadOnly] public float WidthOfPiece;
 
     public bool ManualMoveEmptyPieceEnabled = false;
 
@@ -26,7 +26,7 @@ public class PuzzleBoardScript : MonoBehaviour
     {
         this.boardId = boardId;
         N = TemplateManagerScript.N;
-        widthOfPiece = TemplateManagerScript.widthOfPiece;
+        WidthOfPiece = TemplateManagerScript.WidthOfPiece;
         for (int i = 1; i <= N * N; i++)
         {
             GameObject puzzlePiece = PuzzlePieceScript.AddPiece(
