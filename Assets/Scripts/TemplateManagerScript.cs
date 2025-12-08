@@ -16,7 +16,7 @@ public class TemplateManagerScript : MonoBehaviour
     public GameObject puzzleOneBoard; // Доска пазла #1
     public GameObject puzzleTwoBoard; // Доска пазла #2
     public int countVarietiesShuffleOfPuzzle = 100; // Количество вариантов перемешивания пазла для выбора лучшего
-    public int maxCountMovesForOneVarietyPuzzleShuffle = 20; // Максимальное количество ходов для перемешивания пазла в одном варианте
+    public int minCountMovesForOneVarietyPuzzleShuffle = 20; // Минимальное количество ходов для перемешивания пазла в одном варианте
 
 
     private PuzzleBoardScript puzzleOneBoardScript;
@@ -57,28 +57,28 @@ public class TemplateManagerScript : MonoBehaviour
 
         if (firstPuzzleWillBe == 1)
         {
-            // Первым перемешивается пазл #1
+            // Первым перемешивается пазл #1 за минимальное количество ходов (т.е. он будет собран раньше)
             var misplacedPiecesCountPuzzleOne = puzzleOneBoardScript.CreateShuffledPiecesArrangement(
                 countVarieties: countVarietiesShuffleOfPuzzle,
-                countMovesForShuffle: maxCountMovesForOneVarietyPuzzleShuffle,
+                countMovesForShuffle: minCountMovesForOneVarietyPuzzleShuffle,
                 targetCountMisplacedPieces: null);
-            // Вторым перемешивается пазл #2 на delta ходов меньше (т.е. он будет собран раньше)
+            // Вторым перемешивается пазл #2 на delta ходов больше 
             puzzleTwoBoardScript.CreateShuffledPiecesArrangement(
                 countVarieties: countVarietiesShuffleOfPuzzle,
-                countMovesForShuffle: maxCountMovesForOneVarietyPuzzleShuffle - delta,
+                countMovesForShuffle: minCountMovesForOneVarietyPuzzleShuffle + delta,
                 targetCountMisplacedPieces: misplacedPiecesCountPuzzleOne);
         }
         else
         {
-            // Первым перемешивается пазл #2
+            // Первым перемешивается пазл #2 за минимальное количество ходов (т.е. он будет собран раньше)
             var misplacedPiecesCountPuzzleTwo = puzzleTwoBoardScript.CreateShuffledPiecesArrangement(
                 countVarieties: countVarietiesShuffleOfPuzzle,
-                countMovesForShuffle: maxCountMovesForOneVarietyPuzzleShuffle,
+                countMovesForShuffle: minCountMovesForOneVarietyPuzzleShuffle,
                 targetCountMisplacedPieces: null);
-            // Вторым перемешивается пазл #1 на delta ходов меньше (т.е. он будет собран раньше)
+            // Вторым перемешивается пазл #1 на delta ходов больше
             puzzleOneBoardScript.CreateShuffledPiecesArrangement(
                 countVarieties: countVarietiesShuffleOfPuzzle,
-                countMovesForShuffle: maxCountMovesForOneVarietyPuzzleShuffle - delta,
+                countMovesForShuffle: minCountMovesForOneVarietyPuzzleShuffle + delta,
                 targetCountMisplacedPieces: misplacedPiecesCountPuzzleTwo);
         }
 
