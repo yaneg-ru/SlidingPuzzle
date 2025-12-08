@@ -318,7 +318,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f298bdb42252840a5a63d85a5b61c4a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NxN: 10
+  NxN: 3
   pieceWidth: 0
   piecePrefabForPuzzleOne: {fileID: 5125195553676360061, guid: 9c16d2823223d4ff885a6f545db04b32, type: 3}
   piecePrefabForPuzzleTwo: {fileID: 5125195553676360061, guid: fd2f5b554f0144ecda2ee74b10f4722e, type: 3}
@@ -425,6 +425,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   N: 0
   widthOfPiece: 0
+  ManualMoveEmptyPieceEnabled: 1
 --- !u!1 &2055815082
 GameObject:
   m_ObjectHideFlags: 0
@@ -524,6 +525,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   N: 0
   widthOfPiece: 0
+  ManualMoveEmptyPieceEnabled: 0
 --- !u!1 &2131798466
 GameObject:
   m_ObjectHideFlags: 0

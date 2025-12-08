@@ -90,11 +90,11 @@ public class PiecesArrangement
             EmptyPieceCoord = newEmptyCoord;
 
             // Переводим 1D координаты в 2D индексы (row, col)
-            var oldRowCol = Coord1DToRowCol(oldCoord);
+            var oldRowCol = Coord1DHelper.Convert1DCoordToRowCol(oldCoord);
             int oldRow = oldRowCol[0];
             int oldCol = oldRowCol[1];
 
-            var newRowCol = Coord1DToRowCol(newEmptyCoord);
+            var newRowCol = Coord1DHelper.Convert1DCoordToRowCol(newEmptyCoord);
             int newRow = newRowCol[0];
             int newCol = newRowCol[1];
 
@@ -151,11 +151,11 @@ public class PiecesArrangement
         EmptyPieceCoord = newEmptyCoord;
 
         // Переводим 1D координаты в 2D индексы (row, col)
-        var oldRowCol = Coord1DToRowCol(oldCoord);
+        var oldRowCol = Coord1DHelper.Convert1DCoordToRowCol(oldCoord);
         int oldRow = oldRowCol[0];
         int oldCol = oldRowCol[1];
 
-        var newRowCol = Coord1DToRowCol(newEmptyCoord);
+        var newRowCol = Coord1DHelper.Convert1DCoordToRowCol(newEmptyCoord);
         int newRow = newRowCol[0];
         int newCol = newRowCol[1];
 
@@ -187,11 +187,11 @@ public class PiecesArrangement
         EmptyPieceCoord = newEmptyCoord;
 
         // Переводим 1D координаты в 2D индексы (row, col)
-        var oldRowCol = Coord1DToRowCol(oldCoord);
+        var oldRowCol = Coord1DHelper.Convert1DCoordToRowCol(oldCoord);
         int oldRow = oldRowCol[0];
         int oldCol = oldRowCol[1];
 
-        var newRowCol = Coord1DToRowCol(newEmptyCoord);
+        var newRowCol = Coord1DHelper.Convert1DCoordToRowCol(newEmptyCoord);
         int newRow = newRowCol[0];
         int newCol = newRowCol[1];
 
@@ -202,18 +202,6 @@ public class PiecesArrangement
 
         // Пересчитываем количество неправильно расположенных плиток
         CalcCountMisplacedPieces();
-    }
-
-    private int[] Coord1DToRowCol(int coord)
-    {
-        int row = (coord - 1) / n + 1;
-        int col = (coord - 1) % n + 1;
-        return new int[] { row, col };
-    }
-
-    private int RowColToCoord1D(int row, int col)
-    {
-        return (row - 1) * n + col;
     }
 
     private void AddEmptyCoordToRecent(int coord)
@@ -232,7 +220,7 @@ public class PiecesArrangement
     private int GetEmptyPieceCoordByMove(string move)
     {
         // текущие строка и столбец пустой плитки
-        var emptyPieceRowCol = Coord1DToRowCol(EmptyPieceCoord);
+        var emptyPieceRowCol = Coord1DHelper.Convert1DCoordToRowCol(EmptyPieceCoord);
         int row = emptyPieceRowCol[0];
         int column = emptyPieceRowCol[1];
 
@@ -254,7 +242,7 @@ public class PiecesArrangement
         }
 
         // Гарантированно валидные координаты благодаря wrapping'у
-        return (row - 1) * n + column;
+        return Coord1DHelper.RowColToCoord1D(row, column);
     }
 
     private string GetRandomMove()

@@ -131,9 +131,9 @@ public class PuzzlePieceScript : MonoBehaviour
     // правый нижний угол — (N, N)
     private void calcRowAndColumnFromCurrentNumberOnBoard()
     {
-        int N = TemplateManagerScript.N;
-        CurrentRowOnBoard = ((Current1DCoordOnBoard - 1) / N) + 1;
-        CurrentColumnOnBoard = ((Current1DCoordOnBoard - 1) % N) + 1;
+        var currentRowCol = Coord1DHelper.Convert1DCoordToRowCol(Current1DCoordOnBoard);
+        CurrentRowOnBoard = currentRowCol[0];
+        CurrentColumnOnBoard = currentRowCol[1];
     }
 
     private void updateLocalPositionByRowAndColum()
