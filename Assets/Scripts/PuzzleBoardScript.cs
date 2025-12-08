@@ -6,6 +6,9 @@ public class PuzzleBoardScript : MonoBehaviour
 {
     [ReadOnly] public int N;
     [ReadOnly] public float widthOfPiece;
+
+    public bool ManualMoveEmptyPieceEnabled = false;
+
     private List<GameObject> piecesOnBoard = new List<GameObject>();
 
     private PiecesArrangement piecesArrangement;
@@ -65,6 +68,28 @@ public class PuzzleBoardScript : MonoBehaviour
 
     void Update()
     {
+        if (ManualMoveEmptyPieceEnabled)
+        {
+            HandleArrowInput();
+        }
+    }
 
+    /// Слушает нажатия стрелок и двигает пустую плитку в piecesArrangement.
+    private void HandleArrowInput()
+    {
+        if (piecesArrangement == null) return;
+
+        string direction = null;
+
+        if (Input.GetKeyDown(KeyCode.UpArrow)) direction = "up";
+        else if (Input.GetKeyDown(KeyCode.DownArrow)) direction = "down";
+        else if (Input.GetKeyDown(KeyCode.LeftArrow)) direction = "left";
+        else if (Input.GetKeyDown(KeyCode.RightArrow)) direction = "right";
+
+        if (direction != null)
+        {
+            piecesArrangement.MoveEmptyPiece(direction); // calls PiecesArrangement.MoveEmptyPiece
+            ApplyPiecesArrangementToBoard();             // обновляем позиции визуальных плиток
+        }
     }
 }

@@ -174,6 +174,36 @@ public class PiecesArrangement
         currentBuildStep--;
     }
 
+    // Метод выполняет движение пустой плитки в заданном направлении
+    // direction - "up", "down", "left", "right"
+    // Используется для ручного перемещения пустой плитки для тестирования
+    // анимации и эффектов при перемещении плиток пазла
+    public void MoveEmptyPiece(string direction)
+    {
+        int newEmptyCoord = GetEmptyPieceCoordByMove(direction);
+
+        // Координаты текущей и новой позиции пустой плитки (в 1D)
+        int oldCoord = EmptyPieceCoord;
+        EmptyPieceCoord = newEmptyCoord;
+
+        // Переводим 1D координаты в 2D индексы (row, col)
+        var oldRowCol = Coord1DToRowCol(oldCoord);
+        int oldRow = oldRowCol[0];
+        int oldCol = oldRowCol[1];
+
+        var newRowCol = Coord1DToRowCol(newEmptyCoord);
+        int newRow = newRowCol[0];
+        int newCol = newRowCol[1];
+
+        // Меняем местами значения в массиве Arrangement
+        int temp = Arrangement[oldRow, oldCol];
+        Arrangement[oldRow, oldCol] = Arrangement[newRow, newCol];
+        Arrangement[newRow, newCol] = temp;
+
+        // Пересчитываем количество неправильно расположенных плиток
+        CalcCountMisplacedPieces();
+    }
+
     private int[] Coord1DToRowCol(int coord)
     {
         int row = (coord - 1) / n + 1;
