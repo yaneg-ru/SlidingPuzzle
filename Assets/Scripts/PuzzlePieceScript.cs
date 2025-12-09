@@ -38,7 +38,7 @@ public class PuzzlePieceScript : MonoBehaviour
 {
 
     [ReadOnly] public int PieceNumber;
-    [ReadOnly] public bool IsEmptyPiece;
+    [ReadOnly] public bool IsEmptyPiece = false;
 
     // Текущий 1D координата плитки на доске (меняется при перемещении)
     // левый верхний угол - 1
@@ -152,41 +152,33 @@ public class PuzzlePieceScript : MonoBehaviour
         return piece;
     }
 
-    // Метод, который обновляет позицию плитки пазла 
-    // в соответствии переданной виртуальной картой расположения плиток пазла
-    // Если pieceNumber совпадает с EmptyPieceNumber из piecesArrangement 
-    // тогда отключаем у плитки рендеринг UP объекта
+    /// <summary>
+    /// Обновляет позицию плитки пазла в соответствии с виртуальной картой расположения плиток.
+    /// Использует публичный метод GetPieceInfoByNumber для получения информации о плитке.
+    /// Если pieceNumber совпадает с EmptyPieceNumber, отключает рендеринг UP объекта и устанавливает IsEmptyPiece = true.
+    /// Для остальных плиток устанавливает IsEmptyPiece = false.
+    /// </summary>
+    /// <param name="piecesArrangement">Виртуальная карта расположения плиток пазла</param>
     public void UpdateLocalPositionByPiecesArrangement(PiecesArrangement piecesArrangement)
     {
-        int N = TemplateManagerScript.N;
+        // Получаем информацию о плитке через публичный метод
+        PieceInfo pieceInfo = piecesArrangement.GetPieceInfoByNumber(PieceNumber);
 
-        // Ищем позицию текущей плитки в массиве Arrangement
-        for (int row = 1; row <= N; row++)
+        // Обновляем координаты плитки напрямую из PieceInfo
+        Current1DCoordOnBoard = pieceInfo.Current1DCoord;
+        CurrentRowOnBoard = pieceInfo.Row;
+        CurrentColumnOnBoard = pieceInfo.Column;
+
+        // Обновляем локальную позицию плитки на доске
+        updateLocalPositionByRowAndColum();
+
+        // Если это пустая плитка, отключаем рендеринг UP объекта
+        // И устанавливаем флаг IsEmptyPiece
+        if (PieceNumber == piecesArrangement.EmptyPieceNumber)
         {
-            for (int col = 1; col <= N; col++)
-            {
-                if (piecesArrangement.Arrangement[row, col] == PieceNumber)
-                {
-                    // Обновляем текущую 1D координату плитки на доске
-                    Current1DCoordOnBoard = (row - 1) * N + col;
-
-                    // Пересчитываем строку и столбец из новой координаты
-                    calcRowAndColumnFromCurrentNumberOnBoard();
-
-                    // Обновляем локальную позицию плитки на доске
-                    updateLocalPositionByRowAndColum();
-
-                    // Если это пустая плитка, отключаем рендеринг UP объекта
-                    if (PieceNumber == piecesArrangement.EmptyPieceNumber)
-                    {
-                        GameObject pieceUP = this.transform.Find("UP").gameObject;
-                        pieceUP.GetComponent<MeshRenderer>().enabled = false;
-                        IsEmptyPiece = true;
-                    }
-
-                    return;
-                }
-            }
+            GameObject pieceUP = this.transform.Find("UP").gameObject;
+            pieceUP.GetComponent<MeshRenderer>().enabled = false;
+            IsEmptyPiece = true;
         }
     }
 
