@@ -8,6 +8,8 @@ public class TemplateManagerScript : MonoBehaviour
     public static int N; // Размерность пазлов N x N
     public static float WidthOfPiece; // Ширина одной плитки пазла, рассчитывается как 1 / N
 
+    public static float TimeToMovePiece = 0.2f; // Время перемещения одной плитки пазла
+
     [SerializeField] private int NxN = 3;
     [ReadOnly, SerializeField] private float pieceWidth;
 
