@@ -20,6 +20,7 @@ public class PieceMoveInfo
     public PieceMoveInfo(int from1D, int to1D)
     {
         IsActive = true;
+        From1D = from1D;
         Target1DCoord = to1D;
         Elapsed = 0f;
         MoveWithoutWrapping = Coord1DHelper.IsPossibleMoveWithoutWrapping(from1D, to1D);
@@ -37,6 +38,7 @@ public class PuzzlePieceScript : MonoBehaviour
 {
 
     [ReadOnly] public int PieceNumber;
+    [ReadOnly] public bool IsEmptyPiece;
 
     // Текущий 1D координата плитки на доске (меняется при перемещении)
     // левый верхний угол - 1
@@ -56,6 +58,9 @@ public class PuzzlePieceScript : MonoBehaviour
 
     // Коэффициент масштаба для верхнего слоя плитки
     [ReadOnly] public float ScaleOfUpPiece;
+
+    // Информация о текущем перемещении плитки
+    PieceMoveInfo pieceMoveInfo = null;
 
     void Awake()
     {
@@ -176,12 +181,89 @@ public class PuzzlePieceScript : MonoBehaviour
                     {
                         GameObject pieceUP = this.transform.Find("UP").gameObject;
                         pieceUP.GetComponent<MeshRenderer>().enabled = false;
+                        IsEmptyPiece = true;
                     }
 
                     return;
                 }
             }
         }
+    }
+
+    // Запуск перемещения плитки к целевой 1D координате на доске
+    public void StartMoveToTargetCoord(int target1DCoord)
+    {
+        pieceMoveInfo = new PieceMoveInfo(Current1DCoordOnBoard, target1DCoord);
+        if (pieceMoveInfo.MoveWithoutWrapping)
+        {
+            // Запускаем корутину линейного перемещения без обёртывания
+            StartCoroutine(MoveWithoutWrappingToTargetCoordCoroutine(target1DCoord));
+        }
+        else
+        {
+
+        }
+    }
+
+    // Линейная корутина перемещения без обёртывания
+    private IEnumerator MoveWithoutWrappingToTargetCoordCoroutine(int target1DCoord)
+    {
+        // Начальные данные
+        int N = TemplateManagerScript.N;
+        float duration = TemplateManagerScript.TimeToMovePiece;
+
+        // Рассчитываем стартовые и целевые row/col
+        var startRowCol = Coord1DHelper.Convert1DCoordToRowCol(Current1DCoordOnBoard);
+        int startRow = startRowCol[0];
+        int startCol = startRowCol[1];
+
+        var targetRowCol = Coord1DHelper.Convert1DCoordToRowCol(target1DCoord);
+        int targetRow = targetRowCol[0];
+        int targetCol = targetRowCol[1];
+
+        // Позиции в локальных координатах
+        Vector3 startPos = RowColToLocalPos(startRow, startCol);
+        Vector3 endPos = RowColToLocalPos(targetRow, targetCol);
+
+        // Сброс таймера
+        pieceMoveInfo.Elapsed = 0f;
+        pieceMoveInfo.IsActive = true;
+
+        // Анимация
+        while (pieceMoveInfo.Elapsed < duration)
+        {
+            // Накопление прошедшего времени анимации (в секундах) с учётом Time.timeScale.
+            // Time.deltaTime — это интервал между кадрами, поэтому при повышении/падении FPS
+            // прирост Elapsed остаётся корректным: скорость анимации не зависит от частоты кадров.
+            // Если нужно, чтобы анимация шла даже при паузе (timeScale == 0), замените на Time.unscaledDeltaTime.
+            // Далее Elapsed нормализуется в t = Mathf.Clamp01(Elapsed / duration), что:
+            // - гарантирует завершение анимации за ровно 'duration' секунд в игровом времени;
+            // - защищает от выхода за пределы [0..1] при просадках FPS или больших шагах времени.
+            pieceMoveInfo.Elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(pieceMoveInfo.Elapsed / duration);
+            // Линейная интерполяция
+            transform.localPosition = Vector3.Lerp(startPos, endPos, t);
+
+            // Приостановить выполнение этой корутины до следующего кадра.
+            // - Не блокирует главный поток: управление возвращается Unity, рендер/ввод продолжаются.
+            // - Следующая итерация цикла произойдёт в следующем кадре, что даёт «пошаговую» анимацию.
+            // - В связке с Time.deltaTime выше это делает движение независимым от FPS.
+            // - При timeScale == 0 кадры продолжают идти, но deltaTime == 0, поэтому анимация «замрёт»,
+            //   хотя корутина будет возобновляться каждый кадр. Чтобы полностью «поставить на паузу»
+            //   выполнение, можно ждать условия: yield return new WaitUntil(() => Time.timeScale > 0f).
+            // - Альтернативы: WaitForFixedUpdate (ждать физический шаг), WaitForEndOfFrame (после рендера),
+            //   WaitForSeconds/Realtime (задержка по времени, с/без учёта timeScale).
+            yield return null;
+        }
+
+        // Завершение: фиксируем точные данные состояния
+        Current1DCoordOnBoard = target1DCoord;
+        calcRowAndColumnFromCurrentNumberOnBoard();
+        updateLocalPositionByRowAndColum();
+
+        pieceMoveInfo.MoveDone();
+        // В вашем MoveToTargetCoordCoroutine цикл while завершается, метод доходит до конца, значит MoveNext() 
+        // начинает возвращать false — корутина считается завершённой.
     }
 
     // расчёт в 1‑базовой системе: строка и столбец начинаются с 1
