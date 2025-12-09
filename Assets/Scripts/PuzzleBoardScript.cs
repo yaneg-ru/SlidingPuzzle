@@ -51,7 +51,7 @@ public class PuzzleBoardScript : MonoBehaviour
         return piecesArrangement.CountMisplacedPieces ?? 0;
     }
 
-    // Применение расположения плиток пазла из piecesArrangement к реальным плиткам на доске
+    // Мгновенное применение расположения плиток пазла из piecesArrangement к реальным плиткам на доске
     public void ApplyPiecesArrangementToBoard()
     {
         foreach (GameObject piece in piecesOnBoard)
