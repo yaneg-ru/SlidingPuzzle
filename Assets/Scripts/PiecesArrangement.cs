@@ -3,6 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
+public class PieceInfo
+{
+    public int PieceNumber;
+    public int Current1DCoord { get; set; } // текущая 1D координата плитки на доске
+    public int Row { get; set; } // текущая строка плитки на доске
+    public int Column { get; set; } // текущий столбец плитки на доске
+
+}
+
 // Класс содержащий виртуальную карту расположения плиток пазла 
 // - перемешивание плиток пазла
 // - пошаговая сборка пазла
@@ -202,6 +211,28 @@ public class PiecesArrangement
 
         // Пересчитываем количество неправильно расположенных плиток
         CalcCountMisplacedPieces();
+    }
+
+    // Получение информации о плитке по её номеру
+    public PieceInfo GetPieceInfoByNumber(int pieceNumber)
+    {
+        for (int i = 1; i <= n; i++)
+        {
+            for (int j = 1; j <= n; j++)
+            {
+                if (Arrangement[i, j] == pieceNumber)
+                {
+                    return new PieceInfo
+                    {
+                        PieceNumber = pieceNumber,
+                        Current1DCoord = Coord1DHelper.RowColToCoord1D(i, j),
+                        Row = i,
+                        Column = j
+                    };
+                }
+            }
+        }
+        return null; // плитка с таким номером не найдена
     }
 
     private void AddEmptyCoordToRecent(int coord)
