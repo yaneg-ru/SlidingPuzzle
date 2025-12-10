@@ -204,7 +204,7 @@ public class PiecesArrangement
         int newRow = newRowCol[0];
         int newCol = newRowCol[1];
 
-        // Меняем местами значения в массиве Arrangement
+        // Меняем местами плитки в массиве Arrangement
         int temp = Arrangement[oldRow, oldCol];
         Arrangement[oldRow, oldCol] = Arrangement[newRow, newCol];
         Arrangement[newRow, newCol] = temp;

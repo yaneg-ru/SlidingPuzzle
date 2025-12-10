@@ -9,7 +9,8 @@ public class PuzzleBoardScript : MonoBehaviour
 
     public bool ManualMoveEmptyPieceEnabled = false;
 
-    private List<GameObject> piecesOnBoard = new List<GameObject>();
+    // Словарь игровых плиток на доске, ключ - номер плитки
+    private Dictionary<int, GameObject> piecesOnBoard = new Dictionary<int, GameObject>();
 
     private PiecesArrangement piecesArrangement;
     private string boardId;
@@ -27,6 +28,7 @@ public class PuzzleBoardScript : MonoBehaviour
         this.boardId = boardId;
         N = TemplateManagerScript.N;
         WidthOfPiece = TemplateManagerScript.WidthOfPiece;
+        piecesOnBoard.Clear();
         for (int i = 1; i <= N * N; i++)
         {
             GameObject puzzlePiece = PuzzlePieceScript.AddPiece(
@@ -35,7 +37,7 @@ public class PuzzleBoardScript : MonoBehaviour
                 pieceNumber: i,
                 isUpRendered: isUpRendered,
                 isDownRendered: isDownRendered);
-            piecesOnBoard.Add(puzzlePiece);
+            piecesOnBoard.Add(i, puzzlePiece);
         }
     }
 
@@ -54,11 +56,18 @@ public class PuzzleBoardScript : MonoBehaviour
     // Мгновенное применение расположения плиток пазла из piecesArrangement к реальным плиткам на доске
     public void ApplyPiecesArrangementToBoard()
     {
-        foreach (GameObject piece in piecesOnBoard)
+        foreach (var kv in piecesOnBoard)
         {
-            PuzzlePieceScript pieceScript = piece.GetComponent<PuzzlePieceScript>();
+            PuzzlePieceScript pieceScript = kv.Value.GetComponent<PuzzlePieceScript>();
             pieceScript.UpdateLocalPositionByPiecesArrangement(piecesArrangement);
         }
+    }
+
+    // Получить игровую плитку по её номеру (ключу)
+    public GameObject GetPieceOnBoard(int pieceNumber)
+    {
+        piecesOnBoard.TryGetValue(pieceNumber, out var piece);
+        return piece;
     }
 
     void Start()
